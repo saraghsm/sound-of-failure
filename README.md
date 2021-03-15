@@ -3,7 +3,7 @@ Sound of failure
 
 an AI solution to reduce industrial downtime by diagnosing the failure of machines using their acoustic footprint.
 
-#### -- Project Status: [Active, On-Hold, Completed]
+#### -- Project Status: [Active]
 
 ### Collaborators
 |Name     |  Github Page   |
@@ -34,10 +34,10 @@ The sound problem is converted to a computer vision problem by converted the sou
 In general, only machine sounds from a normal state of an instrument will be available, i.e. the algorithm will not know beforehand how an abnormal sound looks like. So the training would be unsupervised using only normal sound data. Then during validation when the algorithm encounters an abnormal sound, it will identify that as an outlier.
 
 The approaches that is used are (under active development, the results will appear very very soon here!):
-1. Variational Autoencoder
-2. LSTM
-3. DDSP
-4. Transfer Learning models for feature extraction and using anomaly detection models on the extracted features.
+* Variational Autoencoder
+* LSTM
+* DDSP
+* Transfer Learning models for feature extraction and using anomaly detection models on the extracted features.
 
 ### Technologies
 
