@@ -10,185 +10,98 @@ from IPython import display as ipd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.externals.joblib import load, dump
 
-sys.path += ['../src/filecheck', '../src/preprocessing',]
-from flatfielding import *
-from filepath import *
+
+def get_normal_wav_files(raw_data_dir, db, machine_type, machine_id):
+    normal_dir = os.path.join(raw_data_dir,
+                              db, machine_type, machine_id, 'normal')
+    return sorted(glob.glob(os.path.join(normal_dir, '*.wav')))
 
 
-def mel_spectrogram(file, 
-                    scaler, 
-                    n_fft,
-                    n_mels, 
-                    hop_length, 
-                    window, 
-                    power, 
-                    dim, 
-                    step):
-    """
-    Calculates spectrogram of the given audio
-    :param file (str): path to wav
-    :param scaler (sklearn.preprocessing obj)
-    :param n_fft (int): no.of samples in each frame
-    :param hop_length (int): hop samples
-    :param n_mels (int): no. of mel-bands
-    :param power (int): 1 for energy, 2 for power
-    :param window (str): 'STFT' window, e.g. 'Hann'
-    :dim (int): dimension of time slices
-    :step (int): step of sliding window
+def get_abnormal_wav_files(raw_data_dir, db, machine_type, machine_id):
+    normal_dir = os.path.join(raw_data_dir,
+                              db, machine_type, machine_id, 'abnormal')
+    return sorted(glob.glob(os.path.join(normal_dir, '*.wav')))
 
-    :return: Mel spectrogram from sliding window 
-                (no. of slices. dim, n_mels)
-    """
-    y, sr = librosa.load(file, sr=None, mono=True)
 
-    mel_spec = librosa.feature.melspectrogram(y,
-                                              n_fft=n_fft,
-                                              hop_length=hop_length,
-                                              sr=sr,
-                                              n_mels=n_mels,
-                                              window=window,
-                                              power=power)
+def make_mel_dirs(base_dir, db, machine_type, machine_id):
+    data_dir = base_dir
+    for dir in ['data', 'mel_spectrograms', db, machine_type, machine_id]:
+        data_dir = os.path.join(data_dir, dir)
+        if not os.path.exists(data_dir):
+            os.mkdir(data_dir)
 
-    log_mel_spec = librosa.power_to_db(mel_spec, ref=np.max)
-    #log_mel_spec = 20.0 / power * np.log10(mel_spec + sys.float_info.epsilon)
-    
-    # Transform with scaler
-    log_mel_spec = scaler.transform(log_mel_spec)
-    
-    log_mel_spec = log_mel_spec.T
-    
-    length = log_mel_spec.shape[0]
-    
-    start_indices = np.arange(length - dim + step, step=step)
-    
-    for idx in range(len(start_indices)):
-        start = min(start_indices[idx], length - dim)
-    
-        one_slice = log_mel_spec[start : start + dim, :]
-        one_slice = one_slice.reshape((1, one_slice.shape[0], one_slice.shape[1]))
-    
-        if idx == 0:
-          batch = one_slice
+    final_dirs = []
+    for dir in ['normal', 'abnormal']:
+        final_dirs.append(os.path.join(data_dir, dir))
+        if not os.path.exists(os.path.join(data_dir, dir)):
+            os.mkdir(os.path.join(data_dir, dir))
+
+    return tuple(final_dirs)
+
+
+def make_mels(raw_data_dir, base_dir,
+              db, machine_type, machine_id,
+              n_mels, n_fft, hop_length, power, window):
+    normal_dir, abnormal_dir = make_mel_dirs(base_dir,
+                                             db, machine_type, machine_id)
+    save_dirs = [normal_dir, abnormal_dir]
+    wav_lists = [get_normal_wav_files(raw_data_dir,
+                                      db, machine_type, machine_id),
+                 get_abnormal_wav_files(raw_data_dir,
+                                        db, machine_type, machine_id)]
+
+    for save_dir, wav_list in zip(save_dirs, wav_lists):
+
+        if save_dir == normal_dir:
+            print(f'Generate normal spectrograms and save to {save_dir}.')
         else:
-          batch = np.concatenate((batch, one_slice))
+            print(f'Generate abnormal spectrograms and save to {save_dir}.')
 
-    return batch
-    
-    
-def fit_scaler(filelist, n_fft, 
-               n_mels, hop_length, 
-               window, power, 
-               scaler_dir,
-               scaler=StandardScaler()):
-    """
-    Function for fitting a Normalizer (sklearn.preprocessing)
-    """
-    train_path = '/'.join(filelist[0].split('/')[:-1])
-    print("Fitting {} to train data in {}".format(scaler, train_path))
+        for wav_file in wav_list:
+            y, sr = librosa.load(wav_file, sr=None, mono=True)
+            mel = librosa.feature.melspectrogram(y=y, sr=sr,
+                                                 n_fft=n_fft,
+                                                 hop_length=hop_length,
+                                                 n_mels=n_mels,
+                                                 power=power,
+                                                 window=window)
+            mel = librosa.power_to_db(mel, ref=np.max)
+            mel_file = wav_file.split('/')[-1].replace('.wav', '.npy')
+            mel_path = os.path.join(save_dir, mel_file)
+            np.save(mel_path, mel)
 
-  
-    for i, file in tqdm.tqdm(enumerate(filelist), total=len(filelist)):
-    
-        y, sr = librosa.load(file, sr=None, mono=True)
-    
-        mel_spectrogram = librosa.feature.melspectrogram(y, 
-                                                        n_fft=n_fft,
-                                                        n_mels=n_mels,
-                                                        hop_length=hop_length,
-                                                        window=window,
-                                                        power=power)
-        
-        #log_mel_spectrogram = 20.0 / power * np.log10(mel_spectrogram + sys.float_info.epsilon)
-        log_mel_spectrogram = librosa.power_to_db(mel_spectrogram, 
-                                                  ref=np.max)
-    
-        scaler.partial_fit(log_mel_spectrogram)
-        
-        if i==0:
-                dirpath = '/'.join(file.split("/")[:-2])
-                scalerpath = dirpath + '/' + scaler_dir
-                
-                if not os.path.exists(scalerpath):
-                    os.mkdir(scalerpath)
-                else:
-                    shutil.rmtree(scalerpath)
-                    os.mkdir(scalerpath)
-                    
-    dump(scaler, scalerpath+ "/" + "scaler.bin", compress=True)
-    
+
+def get_normal_mel_files(base_dir, db, machine_type, machine_id):
+    normal_dir = os.path.join(base_dir, 'data', 'mel_spectrograms',
+                              db, machine_type, machine_id, 'normal')
+    return sorted(glob.glob(os.path.join(normal_dir, '*.npy')))
+
+
+def get_abnormal_mel_files(base_dir, db, machine_type, machine_id):
+    abnormal_dir = os.path.join(base_dir, 'data', 'mel_spectrograms',
+                                db, machine_type, machine_id, 'abnormal')
+    return sorted(glob.glob(os.path.join(abnormal_dir, '*.npy')))
+
+
+def create_scaler(scaler_type):
+    if scaler_type == 'StandardScaler':
+        scaler = StandardScaler()
+    elif scaler_type == 'MinMaxScaler':
+        scaler = MinMaxScaler()
+    else:
+        print('Invalid scaler_type. Choose StandardScaler or MinMaxScaler')
     return scaler
 
 
-def mel_spectrogram_list(filelist, 
-                         out_dir,
-                         scaler_dir,
-                         n_fft, 
-                         n_mels, 
-                         hop_length, 
-                         window, 
-                         power, 
-                         dim, 
-                         step):
-    """
-    Generate mel spectrograms for all the
-    Audio files in 'filelist'.
-    
-    Before running this run 'fit_scaler'
-    to store or crate the scaler
-    
-    :param filepath (list): Path to all .wav files
-        Output from 'extract_filepath' func.
-    :param out_dir (str): path to store the features
-    :param scaler_dir (str): name of directory where
-                            Scaler is stored.
-    
-    :return: Feature vector (no.of.samples, dim, n_mels)
-        (Only for visualization. All features stored in 'out_dir')
-    """
-    for i, file in tqdm.tqdm(enumerate(filelist), total=len(filelist)):
-        
-        if i==0:
-                    dirpath = '/'.join(file.split("/")[:-2])
-                    outpath = dirpath + '/' + out_dir
-                    scalerpath = dirpath + '/' + scaler_dir
-                    
-                    if not os.path.exists(outpath):
-                        os.mkdir(outpath)
-                    else:
-                        shutil.rmtree(outpath)
-                        os.mkdir(outpath)
-                        
-                    if not os.path.exists(scalerpath):
-                        print("Path to scaler {} does not exist"
-                              .format(scalerpath))
-                        print("First set 'fit_scaler=True' and rerun...")
-                        sys.exit() 
-                        
-        
-                    scaler = load(scalerpath+ "/" + "scaler.bin")
-        
-        
+def fit_scaler_to_mel_files(scaler, file_list):
+    for mel_file in file_list:
+        mel = np.load(mel_file)
+        flat_mel = mel.flatten().reshape(-1, 1)
+        scaler.partial_fit(flat_mel)
 
-        block = mel_spectrogram(file=file, scaler=scaler, 
-                                  n_fft=n_fft, n_mels=n_mels, 
-                                  hop_length=hop_length, 
-                                  window=window, power=power, 
-                                  dim=dim, 
-                                  step=step)
-        
-        if i == 0:
-          vectorarray = block
-        else:
-          vectorarray = np.concatenate((vectorarray, block))
 
-    vectorarray = vectorarray.reshape((vectorarray.shape[0], 
-                              vectorarray.shape[1], 
-                              vectorarray.shape[2], 
-                              1
-                              ))
-                              
-    # Save features
-    np.save(outpath+'/'+'data.npy', vectorarray)
-    
-    return vectorarray
-    
+def apply_scaler_to_mel(scaler, mel):
+    shape_ = mel.shape
+    flat_mel = mel.flatten().reshape(-1, 1)
+    flat_mel = scaler.transform(flat_mel)
+    return flat_mel.reshape(shape_)

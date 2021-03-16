@@ -4,189 +4,61 @@ import sys
 import random
 import numpy as np
 
-sys.path += ['../src/filecheck', '../src/preprocessing',]
-from flatfielding import *
-from filepath import *
+sys.path += ['src/01_data_processing']
+
+print('hello world')
+print(os.getcwd())
+from spectrogram import *
+
+def make_train_test_split(base_dir,
+                          db, machine_type, machine_id,
+                          random_seed=None):
+    normal_files = get_normal_mel_files(base_dir,
+                                        db, machine_type, machine_id)
+    abnormal_files = get_abnormal_mel_files(base_dir,
+                                            db, machine_type, machine_id)
+    if not random_seed is None:
+        random.seed(random_seed)
+    test_files = random.sample(normal_files, len(abnormal_files)) + abnormal_files
+    train_files = [f for f in normal_files if f not in test_files]
+    test_labels = [1] * len(abnormal_files) + [0] * len(abnormal_files)
+    train_labels = [0] * len(train_files)
+
+    return train_files, train_labels, test_files, test_labels
 
 
-def rename_wav(data_dir, 
-               machine_types, 
-               machine_ids, 
-               ):
-    """
-    Renames wav files.
-        Appends 'normal_' before the filename
-        of normal sounds and appends 'abnormal_'
-        before filename of abnormal sounds.
-        
-    data_dir (str): path to the data directory
-        Inside the data_dir expects the following:
-        Path_to_data/<machine>/<machine_ids>/<normal 'or' abnormal>
-        
-    machine_types (list): ["valves","fan" etc]
-    
-    machine_ids (list): ["id_00", "id_02" etc]
-    """
-    for m_type in machine_types:
-        
-        for m_id in machine_ids:
-            
-            norm = extract_filepath(data_dir, 
-                                    inst=m_type, 
-                                    id=m_id, 
-                                    cond='normal')
-            
-            abnorm = extract_filepath(data_dir, 
-                                    inst=m_type, 
-                                    id=m_id, 
-                                    cond='abnormal')
-            
-            rename_norm = ['/'.join(wav.split('/')[:-1])+'/normal_'
-                           + (wav.split('/')[-1]).split('_')[-1] for wav in norm]
-            
-            rename_abnorm = ['/'.join(wav.split('/')[:-1])+'/abnormal_'
-                           + (wav.split('/')[-1]).split('_')[-1] for wav in abnorm]
-            
-            
-            for orig_norm, renam_norm in zip(norm, rename_norm):
-                if not 'normal' in orig_norm:
-                    shutil.move(orig_norm, renam_norm)
-                else:
-                    print("File {} already renamed. Skipping...".format(renam_norm))
-                    pass
-                
-            for orig_abnorm, renam_abnorm in zip(abnorm, rename_abnorm):
-                if not 'abnormal' in orig_abnorm:
-                    shutil.move(orig_abnorm, renam_abnorm)
-                else:
-                    print("File {} already renamed. Skipping...".format(renam_abnorm))
-                    pass
-                
-  
-def train_test_split(data_dir, 
-                     machine_types, 
-                     machine_ids, 
-                     dir_types):
-    """
-    Splits the train and test samples.
-    Creates "train" and "test" dirs under each
-    <data_dir>/<machine_type>/<machine_id>.
-    
-    Test data- All abnormal + same no. of randomly
-                selected normals.
-    Train data- Rest of the normals which are not
-                part of the test set.
-                
-    data_dir (str): path to the data directory
-        Inside the data_dir expects the following:
-        Path_to_data/<machine>/<machine_ids>/<normal 'or' abnormal>
-        
-    machine_types (list): ["valves","fan" etc]
-    
-    machine_ids (list): ["id_00", "id_02" etc]
-    
-    dir_types (list): ["train", "test"]
-    """
-    
-    # Loop for creating the test and train dir
-    for m_type in machine_types:
-        
-        for m_id in machine_ids:
-            
-            for d_type in dir_types:
-                
-                create_dir = '/'.join([data_dir, m_type, m_id, d_type])
-                
-                if not os.path.exists(create_dir):
-                    os.mkdir(create_dir)
-                    
-    # Loop for copying data to train and test
-    for m_type in machine_types:
-        
-        for m_id in machine_ids:
-            
-            train_dir = '/'.join([data_dir, m_type, m_id, 'train'])
-            test_dir = '/'.join([data_dir, m_type, m_id, 'test'])
-            
-            #List of abnormal files
-            abnormal_filepath = extract_filepath(data_dir, 
-                                                inst=m_type, 
-                                                id=m_id, 
-                                                cond='abnormal')
-            # Number of abnormal files
-            abnormal_no = len(abnormal_filepath)
-            
-            #List of normal files
-            normal_filepath = extract_filepath(data_dir, 
-                                                inst=m_type, 
-                                                id=m_id, 
-                                                cond='normal')
-            
-            # Randomly select normal files = abnormal file no
-            normal_selected = random.sample(normal_filepath, 
-                                            abnormal_no)
-            
-            # Move files to the test directory
-            [shutil.move(normal_test, test_dir) 
-            for normal_test in normal_selected]
-                        
-            [shutil.move(abnormal_test, test_dir) 
-            for abnormal_test in abnormal_filepath]
-            
-            # Move rest of normal to train dir
-            normal_remaining = extract_filepath(data_dir, 
-                                                inst=m_type, 
-                                                id=m_id, 
-                                                cond='normal')
-            
-            [shutil.move(normal_train, train_dir) 
-             for normal_train in normal_remaining]
-            
+def subsample_from_mel(mel, dim, step):
+    mel = mel.T
+    length = mel.shape[0]
+    start_indices = np.arange(length - dim + step, step=step)
 
-            
-            
-def undo_train_test(data_dir, 
-                     machine_types, 
-                     machine_ids, 
-                     dir_types):
-    """
-    Undo the train-test split.
-    Moves back the wav files from the 'train' and 'test'
-    back to 'normal' or 'abnormal'.
-                
-    data_dir (str): path to the data directory
-        Inside the data_dir expects the following:
-        Path_to_data/<machine>/<machine_ids>/<normal 'or' abnormal>
-        
-    machine_types (list): ["valves","fan" etc]
-    
-    machine_ids (list): ["id_00", "id_02" etc]
-    
-    dir_types (list): ["train", "test"]
-    """
-    
-    for m_type in machine_types:
-        
-        for m_id in machine_ids:
-            norm_path = '/'.join([data_dir, m_type, m_id, 'normal'])
-            abnorm_path = '/'.join([data_dir, m_type, m_id, 'abnormal'])
-            
-            for d_type in dir_types:
-                
-                filelist = extract_filepath(data_dir, 
-                                            inst=m_type, 
-                                            id=m_id, 
-                                            cond=d_type)
-                
-                if d_type == 'train':
-                    
-                    [shutil.move(f, norm_path) for f in filelist 
-                     if not 'ab' in f]
-                    
-                elif d_type == 'test':
-                    
-                    [shutil.move(f, norm_path) for f in filelist 
-                     if not 'ab' in f]
-                    
-                    [shutil.move(f, abnorm_path) for f in filelist 
-                     if 'ab' in f]
+    for num, idx in enumerate(start_indices):
+        start = min(length - dim, idx)
+        one_slice = mel[start: start + dim, :]
+        one_slice = one_slice.reshape((1, one_slice.shape[0], one_slice.shape[1]))
+
+        if num == 0:
+            batch = one_slice
+        else:
+            batch = np.concatenate((batch, one_slice))
+
+    batch = batch.reshape((batch.shape[0],
+                           batch.shape[1],
+                           batch.shape[2],
+                           1))
+
+    return batch
+
+
+def generate_train_data(train_files, scaler, dim, step):
+    for num, mel_file in enumerate(train_files):
+        mel = np.load(mel_file)
+        mel = apply_scaler_to_mel(scaler, mel)
+        batch = subsample_from_mel(mel, dim, step)
+
+        if num == 0:
+            train_data = batch
+        else:
+            train_data = np.concatenate((train_data, batch))
+
+    return train_data
