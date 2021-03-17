@@ -2,15 +2,26 @@ import os
 import shutil
 import sys
 import random
+import tqdm
 import numpy as np
 
 sys.path += ['src/01_data_processing']
-
 from spectrogram import *
+
 
 def make_train_test_split(base_dir,
                           db, machine_type, machine_id,
                           random_seed=None):
+    """
+    Generate train test split of mel spectrogram files.
+    :param base_dir (str): path to directory where the "data" directory with mel spectrogram files is located
+    :param db (str): noise level, takes values '6dB', '0dB' or 'min6dB'
+    :param machine_type (str): type of machine, takes values 'fan', 'pump', 'slider', 'valve'
+    :param machine_id (str): id of machine, takes values 'id_00', 'id_02' etc.
+    :param random_seed (int): seed for random split of normal mel spectrograms
+
+    :return: mel file lists and labels for train and test set, respectively
+    """
     normal_files = get_normal_mel_files(base_dir,
                                         db, machine_type, machine_id)
     abnormal_files = get_abnormal_mel_files(base_dir,
@@ -26,6 +37,14 @@ def make_train_test_split(base_dir,
 
 
 def subsample_from_mel(mel, dim, step):
+    """
+    Generates a batch of small mel spectrograms from one (large) mel spectrogram.
+    Subsamples are generated using a sliding time window.
+    :param dim (int): dimension of time slices
+    :param step (int): step of sliding window
+
+    :return: feature vector (number of samples, dim, n_mels, 1)
+    """
     mel = mel.T
     length = mel.shape[0]
     start_indices = np.arange(length - dim + step, step=step)
@@ -49,7 +68,16 @@ def subsample_from_mel(mel, dim, step):
 
 
 def generate_train_data(train_files, scaler, dim, step):
-    for num, mel_file in enumerate(train_files):
+    """
+    Generates one large feature vector from a list of mel files.
+    Feature batches are created by loading, scaling and subsampling mel spectrograms from the file list.
+    :param train_files (list): list of mel spectrogram file paths (.npy)
+    :param dim (int): dimension of time slices
+    :param step (int): step of sliding window
+
+    :return: feature vector (number of samples, dim, n_mels, 1)
+    """
+    for num, mel_file in tqdm.tqdm(enumerate(train_files)):
         mel = np.load(mel_file)
         mel = apply_scaler_to_mel(scaler, mel)
         batch = subsample_from_mel(mel, dim, step)
