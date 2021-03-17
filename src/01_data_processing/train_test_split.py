@@ -6,8 +6,6 @@ import numpy as np
 
 sys.path += ['src/01_data_processing']
 
-print('hello world')
-print(os.getcwd())
 from spectrogram import *
 
 def make_train_test_split(base_dir,
@@ -21,7 +19,7 @@ def make_train_test_split(base_dir,
         random.seed(random_seed)
     test_files = random.sample(normal_files, len(abnormal_files)) + abnormal_files
     train_files = [f for f in normal_files if f not in test_files]
-    test_labels = [1] * len(abnormal_files) + [0] * len(abnormal_files)
+    test_labels = [0] * len(abnormal_files) + [1] * len(abnormal_files)
     train_labels = [0] * len(train_files)
 
     return train_files, train_labels, test_files, test_labels
