@@ -6,9 +6,11 @@ config = ConfigParser()
 
 # Argument parser
 parser = argparse.ArgumentParser(
-    description="Params for Spectrogram and Conv AE")
+    description="Params for Spectrogram and Autoencoder (AE or VAE)")
 
 # Add argument through the command line
+parser.add_argument('-ae', '--ae', type=str, metavar='', default='CAE',
+                    help='Type of Autoencoder (AE or VAE)')
 parser.add_argument('-mel', '--n_mels', type=int,
                     metavar='', default=128, help='No. of mel bands')
 parser.add_argument('-fft', '--n_fft', type=int,
@@ -59,7 +61,12 @@ config['autoencoder'] = {
 }
 
 if __name__ == '__main__':
-    config_filename = '/gdrive/MyDrive/sound-of-failure/conf/conf_convAE.ini'
+    if args.ae == 'AE':
+        config_filename = '/gdrive/MyDrive/sound-of-failure/conf/conf_convAE.ini'
+    elif args.ae == 'VAE':
+        config_filename = '/gdrive/MyDrive/sound-of-failure/conf/conf_VAE.ini'
+    else:
+        print("Wrong input. '-ae' should be one of 'AE' or 'VAE'")
 
     with open(config_filename, 'w') as convAE_config:
         config.write(convAE_config)
