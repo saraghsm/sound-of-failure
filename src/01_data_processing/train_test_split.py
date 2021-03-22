@@ -22,10 +22,13 @@ def make_train_test_split(base_dir,
 
     :return: mel file lists and labels for train and test set, respectively
     """
-    normal_files = get_normal_mel_files(base_dir,
-                                        db, machine_type, machine_id)
-    abnormal_files = get_abnormal_mel_files(base_dir,
-                                            db, machine_type, machine_id)
+    normal_files = get_normal_mel_files(base_dir, db, machine_type, machine_id)
+    abnormal_files = get_abnormal_mel_files(base_dir, db, machine_type, machine_id)
+    if len(normal_files) == 0:
+        return [], [], [], []
+    elif len(abnormal_files) == 0:
+        return [], [], [], []
+
     if not random_seed is None:
         random.seed(random_seed)
     test_files = random.sample(normal_files, len(abnormal_files)) + abnormal_files
@@ -63,7 +66,6 @@ def subsample_from_mel(mel, dim, step):
                            batch.shape[1],
                            batch.shape[2],
                            1))
-
     return batch
 
 
@@ -77,7 +79,7 @@ def generate_train_data(train_files, scaler, dim, step):
 
     :return: feature vector (number of samples, dim, n_mels, 1)
     """
-    for num, mel_file in tqdm.tqdm(enumerate(train_files)):
+    for num, mel_file in tqdm.tqdm(enumerate(train_files), total=len(train_files)):
         mel = np.load(mel_file)
         mel = apply_scaler_to_mel(scaler, mel)
         batch = subsample_from_mel(mel, dim, step)
@@ -86,5 +88,9 @@ def generate_train_data(train_files, scaler, dim, step):
             train_data = batch
         else:
             train_data = np.concatenate((train_data, batch))
+
+    if len(train_files) == 0:
+        print('Cannot generate train data from empty file list.')
+        return None
 
     return train_data

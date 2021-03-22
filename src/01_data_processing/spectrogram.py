@@ -21,8 +21,12 @@ def get_normal_wav_files(raw_data_dir, db, machine_type, machine_id):
 
     :return: sorted list of wav files for normal sound
     """
-    normal_dir = os.path.join(raw_data_dir,
-                              db, machine_type, machine_id, 'normal')
+    normal_dir = os.path.join(raw_data_dir, db, machine_type, machine_id, 'normal')
+    if not os.path.exists(normal_dir):
+        print(f'Directory {normal_dir} does not exist. Please make sure that raw data directory, ' + \
+              'dB and machine type are correct and that machine ID exists.')
+        return []
+
     return sorted(glob.glob(os.path.join(normal_dir, '*.wav')))
 
 
@@ -36,9 +40,13 @@ def get_abnormal_wav_files(raw_data_dir, db, machine_type, machine_id):
 
     :return: sorted list of wav files for abnormal sound
     """
-    normal_dir = os.path.join(raw_data_dir,
-                              db, machine_type, machine_id, 'abnormal')
-    return sorted(glob.glob(os.path.join(normal_dir, '*.wav')))
+    abnormal_dir = os.path.join(raw_data_dir, db, machine_type, machine_id, 'abnormal')
+    if not os.path.exists(abnormal_dir):
+        print(f'Directory {abnormal_dir} does not exist. Please make sure that raw data directory, ' + \
+              'dB and machine type are correct and that machine ID exists.')
+        return []
+
+    return sorted(glob.glob(os.path.join(abnormal_dir, '*.wav')))
 
 
 def make_mel_dirs(base_dir, db, machine_type, machine_id):
@@ -56,29 +64,19 @@ def make_mel_dirs(base_dir, db, machine_type, machine_id):
 
     :return: paths to directories for normal and abnormal mel spectrograms
     """
-    dirs_exist = True
     data_dir = base_dir
     for dir in ['data', 'mel_spectrograms', db, machine_type, machine_id]:
         data_dir = os.path.join(data_dir, dir)
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
-            dirs_exist = False
 
-    final_dirs = []
     for dir in ['normal', 'abnormal']:
-        final_dirs.append(os.path.join(data_dir, dir))
-        if not os.path.exists(os.path.join(data_dir, dir)):
-            os.mkdir(os.path.join(data_dir, dir))
-            dirs_exist = False
-
-    normal_dir = final_dirs[0]
-    abnormal_dir = final_dirs[1]
-    if dirs_exist:
-        print(f'Directories already exist.\nNormal: {normal_dir}\nAbnormal: {abnormal_dir}')
-    else:
-        print(f'Directories created.\nNormal: {normal_dir}\nAbnormal: {abnormal_dir}')
-
-    return normal_dir, abnormal_dir
+        mel_dir = os.path.join(data_dir, dir)
+        if not os.path.exists(mel_dir):
+            os.mkdir(mel_dir)
+            print(f'Directory created: {mel_dir}')
+        else:
+            print(f'Directory already exists: {mel_dir}')
 
 
 def get_mel_dirs(base_dir, db, machine_type, machine_id):
@@ -98,6 +96,15 @@ def get_mel_dirs(base_dir, db, machine_type, machine_id):
     normal_dir = os.path.join(data_dir, 'normal')
     abnormal_dir = os.path.join(data_dir, 'abnormal')
 
+    if not os.path.exists(normal_dir):
+        print(f'Directory {normal_dir} does not exist.\n' + \
+              'Please run make_mel_dirs(base_dir, db, machine_type, machine_id) to create it.')
+        normal_dir = None
+
+    if not os.path.exists(abnormal_dir):
+        print(f'Directory {abnormal_dir} does not exist.\n' + \
+              'Please run make_mel_dirs(base_dir, db, machine_type, machine_id) to create it.')
+        abnormal_dir = None
 
     return normal_dir, abnormal_dir
 
@@ -121,18 +128,21 @@ def make_mels(raw_data_dir, base_dir,
     :param window (str): 'STFT' window, e.g. 'Hann'
     :param overwrite (bool): flag to control if existing files are overwritten
     """
+    # Retrieve directories for storing mel spectrograms
     normal_dir, abnormal_dir = get_mel_dirs(base_dir, db, machine_type, machine_id)
-    if not os.path.exists(normal_dir):
-        print(f'Directory {normal_dir} does not exist.')
-        print('Please run make_mel_dirs(base_dir, db, machine_type, machine_id) to create all required directories.')
-    if not os.path.exists(abnormal_dir):
-        print(f'Directory {abnormal_dir} does not exist.')
-        print('Please run make_mel_dirs(base_dir, db, machine_type, machine_id) to create all required directories.')
-
+    if (normal_dir is None) or (abnormal_dir is None):
+        return
     save_dirs = [normal_dir, abnormal_dir]
+
+    # Retrieve lists of wav files from which mel spectrograms will be generated
     wav_lists = [get_normal_wav_files(raw_data_dir, db, machine_type, machine_id),
                  get_abnormal_wav_files(raw_data_dir, db, machine_type, machine_id)]
 
+    if (len(wav_lists[0]) == 0) or (len(wav_lists[1]) == 0):
+        print('Did not find normal and abnormal wav files.')
+        return
+
+    # Loop for normal and abnormal sounds
     for save_dir, wav_list in zip(save_dirs, wav_lists):
 
         if save_dir == normal_dir:
@@ -140,13 +150,17 @@ def make_mels(raw_data_dir, base_dir,
         else:
             print(f'Generate abnormal spectrograms and save to {save_dir}.')
 
+        num_existing = 0
+        num_created = 0
         for wav_file in tqdm.tqdm(wav_list):
+            # Check if spectrogram file already exists
             mel_file = wav_file.split('/')[-1].replace('.wav', '.npy')
             mel_path = os.path.join(save_dir, mel_file)
             if os.path.exists(mel_path) and not overwrite:
-                print(f'File already exists: {mel_path}')
+                num_existing += 1
                 continue
 
+            # Generate spectrogram and save
             y, sr = librosa.load(wav_file, sr=None, mono=True)
             mel = librosa.feature.melspectrogram(y=y, sr=sr,
                                                  n_fft=n_fft,
@@ -156,6 +170,10 @@ def make_mels(raw_data_dir, base_dir,
                                                  window=window)
             mel = librosa.power_to_db(mel, ref=np.max)
             np.save(mel_path, mel)
+            num_created += 1
+
+        print(f'{num_created} spectrograms newly created, {num_existing} already existed.')
+
 
 
 def get_normal_mel_files(base_dir, db, machine_type, machine_id):
@@ -168,9 +186,11 @@ def get_normal_mel_files(base_dir, db, machine_type, machine_id):
 
     :return: sorted list of spectrogram files (.npy) for normal sound
     """
-    normal_dir = os.path.join(base_dir, 'data', 'mel_spectrograms',
-                              db, machine_type, machine_id, 'normal')
-    return sorted(glob.glob(os.path.join(normal_dir, '*.npy')))
+    normal_dir = os.path.join(base_dir, 'data', 'mel_spectrograms', db, machine_type, machine_id, 'normal')
+    normal_mel_files = sorted(glob.glob(os.path.join(normal_dir, '*.npy')))
+    if len(normal_mel_files) == 0:
+        print(f'No mel spectrograms found in {normal_dir}.')
+    return normal_mel_files
 
 
 def get_abnormal_mel_files(base_dir, db, machine_type, machine_id):
@@ -183,9 +203,11 @@ def get_abnormal_mel_files(base_dir, db, machine_type, machine_id):
 
     :return: sorted list of spectrogram files (.npy) for abnormal sound
     """
-    abnormal_dir = os.path.join(base_dir, 'data', 'mel_spectrograms',
-                                db, machine_type, machine_id, 'abnormal')
-    return sorted(glob.glob(os.path.join(abnormal_dir, '*.npy')))
+    abnormal_dir = os.path.join(base_dir, 'data', 'mel_spectrograms', db, machine_type, machine_id, 'abnormal')
+    abnormal_mel_files = sorted(glob.glob(os.path.join(abnormal_dir, '*.npy')))
+    if len(abnormal_mel_files) == 0:
+        print(f'No mel spectrograms found in {abnormal_dir}.')
+    return abnormal_mel_files
 
 
 def create_scaler(scaler_type):
@@ -214,6 +236,9 @@ def fit_scaler_to_mel_files(scaler, file_list):
         mel = np.load(mel_file)
         flat_mel = mel.flatten().reshape(-1, 1)
         scaler.partial_fit(flat_mel)
+    if len(file_list) == 0:
+        print('Cannot fit scaler to empty file list.')
+        return
 
 
 def apply_scaler_to_mel(scaler, mel):
