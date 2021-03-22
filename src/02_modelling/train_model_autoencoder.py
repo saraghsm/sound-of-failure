@@ -128,12 +128,12 @@ def compile_model(model,
     
     Currently allows 3 optimizers: Adam, RMSprop, SGD
     """
-    if learning_rate == 'adam':
-        optimizer = optimizers.Adam(learning_rate=int(learning_rate))
-    if learning_rate == 'rmsprop':
-        optimizer = optimizers.RMSprop(learning_rate=int(learning_rate))
-    if learning_rate == 'sgd':
-        optimizer = optimizers.SGD(learning_rate=int(learning_rate))
+    if optimizer == 'adam':
+        optimizer = optimizers.Adam(learning_rate=float(learning_rate))
+    if optimizer == 'rmsprop':
+        optimizer = optimizers.RMSprop(learning_rate=float(learning_rate))
+    if optimizer == 'sgd':
+        optimizer = optimizers.SGD(learning_rate=float(learning_rate))
 
     model.compile(optimizer=optimizer,
                   loss=loss)
