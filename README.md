@@ -27,10 +27,11 @@ an AI solution to reduce industrial downtime by diagnosing the failure of machin
 **Machine Learning:** In general, only machine sounds from a normal state of an instrument will be available, i.e. the algorithm will not know beforehand how an abnormal sound looks like. So the training would be unsupervised using only normal sound data. Then during validation when the algorithm encounters an abnormal sound, it will identify that as an outlier.
 
 The approaches that is used are (under active development, the results will appear very very soon here!):
+* Convolution Autoencoder
 * Variational Autoencoder
 * LSTM
-* DDSP
-* Transfer Learning models for feature extraction and using anomaly detection models on the extracted features.
+* Convolution LSTM
+* Transfer Learning models for feature extraction and using anomaly detection models on the extracted features
 
 ### Technologies
 
@@ -42,6 +43,8 @@ The approaches that is used are (under active development, the results will appe
 * etc.
 
 ## Getting Started
+
+0. Get the raw data from... (TBC)
 
 1. Clone this repo (for help see this [tutorial](https://help.github.com/articles/cloning-a-repository/)).
 2. cd sound-of-failure; mkdir data
