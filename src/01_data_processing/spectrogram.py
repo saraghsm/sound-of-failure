@@ -246,7 +246,7 @@ def fit_scaler_to_mel_files(scaler, file_list):
         return
 
 
-def fit_and_save_scaler(scaler_type, file_list, name_string, overwrite=False):
+def fit_and_save_scaler(scaler_type, file_list, scaler_path, overwrite=False):
     """
     Function for fitting a normalizer/scaler (sklearn.preprocessing) to multiple spectrogram files.
     The result is stored locally under a default name according to name_string.
@@ -254,23 +254,22 @@ def fit_and_save_scaler(scaler_type, file_list, name_string, overwrite=False):
     By default the stored scaler is loaded and returned, instead of fitting again .
     :param scaler_type (str): type of scaler to be created
     :param file_list (str): list of spectrogram files (.npy)
-    :param name_string (str): name string to be used for storing/loading
+    :param scaler_path (str): scaler path used for storing/loading
     :overwrite (bool): flag to control if existing scaler is overwritten instead of loaded
 
     :return: fitted scaler
     """
-    scaler_path = get_scaler_path(name_string)
     if os.path.exists(scaler_path):
         if overwrite:
             print(f'Overwriting existing scaler {scaler_path}.')
         else:
             print(f'Loading existing scaler {scaler_path}.')
-            return joblib.load(scaler_path)
+            return load(scaler_path)
 
     scaler = create_scaler(scaler_type)
     fit_scaler_to_mel_files(scaler, file_list)
     print(f'Saving scaler to {scaler_path}.')
-    joblib.dump(scaler, scaler_path)
+    dump(scaler, scaler_path)
 
     return scaler
 
