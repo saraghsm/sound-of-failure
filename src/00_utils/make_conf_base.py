@@ -12,18 +12,18 @@ parser = argparse.ArgumentParser(
 # Add argument through the command line
 parser.add_argument('-raw', '--raw_data', metavar='',
                     required=True, help='Path to raw data inside gdrive/MyDrive')
-parser.add_argument('-prj', '--project', default='sound-of-failure',
-                    help='directory name of the project')
+parser.add_argument('-prj', '--project', metavar='',
+                    required=True, help='directory that holds sound-of-failure')
 args = parser.parse_args()
 
 # Build the directory configuration
 config_base['directories'] = {
     'raw_data_dir': args.raw_data,
-    'base_dir': os.path.join('/gdrive', 'MyDrive', args.project)
+    'base_dir': os.path.join(args.project, 'sound-of-failure')
 }
 
 if __name__ == '__main__':
-    config_filename = '/gdrive/MyDrive/sound-of-failure/conf/conf_base.ini'
+    config_filename = os.path.join(args.project, 'sound-of-failure/conf/conf_base.ini')
 
     with open(config_filename, 'w') as base_file:
         config_base.write(base_file)

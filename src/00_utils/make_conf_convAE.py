@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 import argparse
+import os
 
 # Config parser
 config = ConfigParser()
@@ -9,6 +10,8 @@ parser = argparse.ArgumentParser(
     description="Params for Spectrogram and Autoencoder (AE or VAE)")
 
 # Add argument through the command line
+parser.add_argument('-prj', '--project', metavar='',
+                    required=True, help='directory that holds sound-of-failure')
 parser.add_argument('-ae', '--ae', type=str, metavar='', default='CAE',
                     help='Type of Autoencoder (AE or VAE)')
 parser.add_argument('-mel', '--n_mels', type=int,
@@ -46,7 +49,7 @@ config['model'] = {
     'scaler': 'StandardScaler',
     'loss': 'mean_squared_error',
     'optimizer': 'adam',
-    'epochs': 30,
+    'epochs': 100,
     'batch_size': 64,
     'val_split': 0.1,
     'shuffle': True
@@ -62,9 +65,9 @@ config['autoencoder'] = {
 
 if __name__ == '__main__':
     if args.ae == 'AE':
-        config_filename = '/gdrive/MyDrive/sound-of-failure/conf/conf_convAE.ini'
+        config_filename = os.path.join(args.project, 'sound-of-failure/conf/conf_convAE.ini')
     elif args.ae == 'VAE':
-        config_filename = '/gdrive/MyDrive/sound-of-failure/conf/conf_VAE.ini'
+        config_filename = os.path.join(args.project, 'sound-of-failure/conf/conf_VAE.ini')
     else:
         print("Wrong input. '-ae' should be one of 'AE' or 'VAE'")
 
