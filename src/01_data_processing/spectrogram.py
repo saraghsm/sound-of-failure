@@ -10,6 +10,8 @@ from IPython import display as ipd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.externals.joblib import load, dump
 
+sys.path += ['src/00_utils']
+from naming import *
 
 def get_normal_wav_files(raw_data_dir, db, machine_type, machine_id):
     """
@@ -156,9 +158,12 @@ def make_mels(raw_data_dir, base_dir,
             # Check if spectrogram file already exists
             mel_file = wav_file.split('/')[-1].replace('.wav', '.npy')
             mel_path = os.path.join(save_dir, mel_file)
-            if os.path.exists(mel_path) and not overwrite:
-                num_existing += 1
-                continue
+            if os.path.exists(mel_path):
+                if overwrite:
+                    os.remove(mel_path)
+                else:
+                    num_existing += 1
+                    continue
 
             # Generate spectrogram and save
             y, sr = librosa.load(wav_file, sr=None, mono=True)
@@ -172,7 +177,7 @@ def make_mels(raw_data_dir, base_dir,
             np.save(mel_path, mel)
             num_created += 1
 
-        print(f'{num_created} spectrograms newly created, {num_existing} already existed.')
+        print(f'Created {num_created} new spectrograms, kept {num_existing} existing spectrograms.')
 
 
 
@@ -241,11 +246,40 @@ def fit_scaler_to_mel_files(scaler, file_list):
         return
 
 
+def fit_and_save_scaler(scaler_type, file_list, name_string, overwrite=False):
+    """
+    Function for fitting a normalizer/scaler (sklearn.preprocessing) to multiple spectrogram files.
+    The result is stored locally under a default name according to name_string.
+    Before fitting it is checked if a stored scaler is found.
+    By default the stored scaler is loaded and returned, instead of fitting again .
+    :param scaler_type (str): type of scaler to be created
+    :param file_list (str): list of spectrogram files (.npy)
+    :param name_string (str): name string to be used for storing/loading
+    :overwrite (bool): flag to control if existing scaler is overwritten instead of loaded
+
+    :return: fitted scaler
+    """
+    scaler_path = get_scaler_path(name_string)
+    if os.path.exists(scaler_path):
+        if overwrite:
+            print(f'Overwriting existing scaler {scaler_path}.')
+        else:
+            print(f'Loading existing scaler {scaler_path}.')
+            return joblib.load(scaler_path)
+
+    scaler = create_scaler(scaler_type)
+    fit_scaler_to_mel_files(scaler, file_list)
+    print(f'Saving scaler to {scaler_path}.')
+    joblib.dump(scaler, scaler_path)
+
+    return scaler
+
+
 def apply_scaler_to_mel(scaler, mel):
     """
     Function for applying a fitted normalizer/scaler (sklearn.preprocessing) to a single mel spectrogram.
     :param scaler (sklearn.preprocessing obj): scaler that is applied
-    :param mel (numpy.ndarray)
+    :param mel (numpy.ndarray): mel spectrogram
 
     :return: scaled mel spectrogram
     """
