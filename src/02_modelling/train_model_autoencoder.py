@@ -45,6 +45,7 @@ import spectrogram as spec
 import train_test_split as splt
 from conv_autoencoder import ConvAutoencoder
 from var_autoencoder import VarAutoencoder
+from lstm_autoencoder import lstmAutoencoder
 
 # NOTE : Before running the training
 # pip install git+https://github.com/AI-Guru/ngdlm.git
@@ -69,9 +70,9 @@ def read_config(config_file):
 def load_new_model(model_name,
                input_shape,
                num_nodes,
-               num_kernel,
-               num_strides,
-               latent_dim):
+               num_kernel=None,
+               num_strides=None,
+               latent_dim=None):
     """
     model_name : AE or VAR
     input_shape : Shape of spectrogram slice
@@ -94,8 +95,12 @@ def load_new_model(model_name,
                                num_strides=num_strides,
                                latent_dim=latent_dim)
         return model.model
+    elif model_name == 'lstmAE':
+        model = lstmAutoencoder(input_shape=input_shape,
+                                num_units=num_nodes)
+        return model.model
     else:
-        print("Wrong model input. model_name should be wither AE or VAE. Exiting...")
+        print("Wrong model input. model_name should be AE, VAE or lstmAE. Exiting...")
 
 ##########################################################
 # Load the already saved training model
@@ -139,14 +144,15 @@ def compile_model(model,
                   loss=loss)
 
 def train_model(model,
-          train_data,
-          epochs,
-          batch_size,
-          validation_split,
-          shuffle,
-          callback=False,
-          patience=10,
-          model_outdir=None):
+                train_data,
+                epochs,
+                batch_size,
+                validation_split,
+                shuffle,
+                callback=False,
+                patience=10,
+                model_outdir=None,
+                overwrite=True):
     """
     Train the tensorflow model
     """

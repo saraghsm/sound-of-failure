@@ -39,7 +39,7 @@ def make_train_test_split(base_dir,
     return train_files, train_labels, test_files, test_labels
 
 
-def subsample_from_mel(mel, dim, step):
+def subsample_from_mel(mel, dim, step, as_images=True):
     """
     Generates a batch of small mel spectrograms from one (large) mel spectrogram.
     Subsamples are generated using a sliding time window.
@@ -66,10 +66,13 @@ def subsample_from_mel(mel, dim, step):
                            batch.shape[1],
                            batch.shape[2],
                            1))
+    if not as_images:
+        batch = batch[:,:,:,0]
+
     return batch
 
 
-def generate_train_data(train_files, scaler, dim, step):
+def generate_train_data(train_files, scaler, dim, step, as_images=True):
     """
     Generates one large feature vector from a list of mel files.
     Feature batches are created by loading, scaling and subsampling mel spectrograms from the file list.
@@ -82,7 +85,7 @@ def generate_train_data(train_files, scaler, dim, step):
     for num, mel_file in tqdm.tqdm(enumerate(train_files), total=len(train_files)):
         mel = np.load(mel_file)
         mel = apply_scaler_to_mel(scaler, mel)
-        batch = subsample_from_mel(mel, dim, step)
+        batch = subsample_from_mel(mel, dim, step, as_images)
 
         if num == 0:
             train_data = batch

@@ -33,7 +33,7 @@ import train_test_split as splt
 # Deocode spectrograms and calculare Reconstruction loss
 ##########################################################
 
-def decode_spectrogram(model, scaler, dim, step, test_file):
+def decode_spectrogram(model, scaler, dim, step, test_file, as_images=True):
     """
     Reconstruct one spectrogram
 
@@ -50,11 +50,11 @@ def decode_spectrogram(model, scaler, dim, step, test_file):
     # Apply scaling to the spectrogram
     scaled_mel = spec.apply_scaler_to_mel(scaler, mel)
     # Create a batch by slicing one spectrogram
-    batch = splt.subsample_from_mel(scaled_mel, dim, step)
+    batch = splt.subsample_from_mel(scaled_mel, dim, step, as_images)
     return batch, model.predict(batch)
 
 
-def reco_loss(model, scaler, dim, step, test_files):
+def reco_loss(model, scaler, dim, step, test_files, as_images=True):
     """
     Calculate reconstruction loss of spectrograms
 
@@ -77,7 +77,7 @@ def reco_loss(model, scaler, dim, step, test_files):
                                                      scaler,
                                                      dim,
                                                      step,
-                                                     test_file)
+                                                     test_file, as_images)
 
         # Error calculation
         squared_error = np.square(orig_slices - dec_slices)
