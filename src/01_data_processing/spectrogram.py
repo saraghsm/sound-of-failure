@@ -162,6 +162,10 @@ def make_mels(raw_data_dir, base_dir,
                 if overwrite:
                     os.remove(mel_path)
                 else:
+                    mel = np.load(mel_path)
+                    assert mel.shape[0] == n_mels, \
+                        'Number of mel banks in existing spectrograms not compatible with argument n_mels. ' \
+                        'Rerun with overwrite=True.'
                     num_existing += 1
                     continue
 
