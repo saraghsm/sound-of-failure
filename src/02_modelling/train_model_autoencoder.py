@@ -143,16 +143,17 @@ def compile_model(model,
     model.compile(optimizer=optimizer,
                   loss=loss)
 
+
 def train_model(model,
-                train_data,
-                epochs,
-                batch_size,
-                validation_split,
-                shuffle,
-                callback=False,
-                patience=10,
-                model_outdir=None,
-                overwrite=True):
+          train_data,
+          epochs,
+          batch_size,
+          validation_split,
+          validation_data=None,
+          shuffle=True,
+          callback=False,
+          patience=10,
+          model_outdir=None):
     """
     Train the tensorflow model
     """
@@ -169,25 +170,44 @@ def train_model(model,
                                      save_best_only=True,
                                      verbose=1)
 
-        # Train the model
-        history = model.fit(train_data,
-                            train_data,
-                            epochs=epochs,
-                            batch_size=batch_size,
-                            validation_split=validation_split,
-                            shuffle=shuffle,
-                            callbacks=[early_stop, checkpoint],
-                            verbose=1)
+        # Check for validation data and train the model
+        if validation_data is None:
+          history = model.fit(train_data,
+                              train_data,
+                              epochs=epochs,
+                              batch_size=batch_size,
+                              validation_split=validation_split,
+                              shuffle=shuffle,
+                              callbacks=[early_stop, checkpoint],
+                              verbose=1)
+        else:
+          history = model.fit(train_data,
+                              train_data,
+                              epochs=epochs,
+                              batch_size=batch_size,
+                              validation_data=(validation_data, validation_data),
+                              shuffle=shuffle,
+                              callbacks=[early_stop, checkpoint],
+                              verbose=1)
 
         return history
 
     else:
         # Train the model
-        history = model.fit(train_data,
+        if validation_data is None:
+          history = model.fit(train_data,
                             train_data,
                             epochs=epochs,
                             batch_size=batch_size,
                             validation_split=validation_split,
+                            shuffle=shuffle,
+                            verbose=1)
+        else:
+          history = model.fit(train_data,
+                            train_data,
+                            epochs=epochs,
+                            batch_size=batch_size,
+                            validation_data=(val_data, val_data),
                             shuffle=shuffle,
                             verbose=1)
 
