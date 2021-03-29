@@ -1,19 +1,29 @@
 from configparser import ConfigParser
 import argparse
 import os
+import sys
+
+sys.path += ['src/00_utils']
+from naming import *
 
 # Config parser
 config = ConfigParser()
 
 # Argument parser
 parser = argparse.ArgumentParser(
-    description="Params for Spectrogram and Autoencoder (AE or VAE)")
+    description="Params for Spectrogram and Autoencoder (AE, VAE or lstmAE)")
 
 # Add argument through the command line
-parser.add_argument('-prj', '--project', metavar='',
-                    required=True, help='directory that holds sound-of-failure')
-parser.add_argument('-ae', '--ae', type=str, metavar='', default='CAE',
-                    help='Type of Autoencoder (AE or VAE)')
+parser.add_argument('-prj', '--project', metavar='_',
+                    required=True, help='directory hat holds sound-of-failure')
+parser.add_argument('-ae', '--ae', type=str, metavar='', default='AE',
+                    help='Type of Autoencoder (AE, VAE or lstmAE)')
+parser.add_argument('-noise', '--noise', type=str, metavar='', default='6dB',
+                    help='Level of background noise (6dB, 0dB or min6dB)')
+parser.add_argument('-type', '--type', type=str, metavar='',
+                    help='Type of machine (valve, slider, pump or fan)')
+parser.add_argument('-id', '--id', type=str, metavar='',
+                    help='Machine ID (e.g. id_00)')
 parser.add_argument('-mel', '--n_mels', type=int,
                     metavar='', default=128, help='No. of mel bands')
 parser.add_argument('-fft', '--n_fft', type=int,
@@ -39,9 +49,9 @@ config['melspec'] = {
 
 # Parameters for accessing the data
 config['data'] = {
-    'noise': '6dB',
-    'machine': 'valve',
-    'machine_id': 'id_00'
+    'noise': args.noise,
+    'machine': args.type,
+    'machine_id': args.id
 }
 
 # Parameters for model training
@@ -56,20 +66,31 @@ config['model'] = {
 }
 
 # Parameters for the Convolutional Autoencoder
-config['autoencoder'] = {
-    'latentdim': 20,
-    'num_nodes': [32, 64, 128, 256,],
-    'num_kernel': [5, 5, 3, 3,],
-    'num_strides': [(1, 2), (2, 2), (2, 2), (1, 2),]
-}
+if args.ae in ['AE', 'VAE']:
+    config['autoencoder'] = {
+        'model_name': args.ae,
+        'latentdim': 20,
+        'num_nodes': [32, 64, 128, 256,],
+        'num_kernel': [5, 5, 3, 3,],
+        'num_strides': [(1, 2), (2, 2), (2, 2), (1, 2),]
+    }
+
+if args.ae == 'lstmAE':
+    config['autoencoder'] = {
+        'model_name': args.ae,
+        'num_nodes': [128, 128, 128,],
+    }
 
 if __name__ == '__main__':
-    if args.ae == 'AE':
-        config_filename = os.path.join(args.project, 'sound-of-failure/conf/conf_convAE.ini')
-    elif args.ae == 'VAE':
-        config_filename = os.path.join(args.project, 'sound-of-failure/conf/conf_VAE.ini')
+    model_name = args.ae
+    db = args.noise
+    machine_type = args.type
+    machine_id = args.id
+    run_id = make_run_id(model_name, db, machine_type, machine_id)
+    if args.ae in ['AE', 'VAE', 'lstmAE']:
+        conf_path = get_conf_path(run_id)
     else:
-        print("Wrong input. '-ae' should be one of 'AE' or 'VAE'")
+        print("Wrong input. '-ae' should be one of 'AE', 'VAE' or 'lstmAE'")
 
-    with open(config_filename, 'w') as convAE_config:
-        config.write(convAE_config)
+    with open(conf_path, 'w') as AE_config:
+        config.write(AE_config)
