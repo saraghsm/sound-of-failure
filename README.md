@@ -1,7 +1,7 @@
 Sound of failure
 ==============================
 
-an AI solution to reduce industrial downtime by diagnosing the failure of machines using their acoustic footprint.
+An AI solution to reduce industrial downtime by diagnosing the failure of machines using their acoustic footprint.
 
 #### -- Project Status: [Active]
 
@@ -55,28 +55,31 @@ Project Organization
 ------------
 
     ├── LICENSE
-    ├── Makefile                 <- Makefile with commands like `make data` or `make train` (TBC)
+    ├── Makefile                 <- Makefile with commands like `make data` or `make train` (To be added)
     ├── README.md                <- The top-level README for description of this project and how to use it.
     ├── requirements.txt         <- The requirements file for reproducing the analysis environment
-    ├── setup.py                 <- makes project pip installable (pip install -e .) so src can be imported
+    ├── setup.py                 <- makes project pip installable (pip install -e .) so src can be imported (To be added)
     │
-    ├── data
+    ├── conf                     <- (Directory) Configuration files
+    │
+    ├── data                     <- (Directory) Processed data
     │   └── mel_spectrograms     <- Un-scaled Mel Spectrograms, 1 per audio file
     │
-    ├── docs                     <- A default Sphinx project; see sphinx-doc.org for details (TBC)
+    ├── docs                     <- (Directory) A default Sphinx project; see sphinx-doc.org for details (TBC)
     │
-    ├── models                   <- Trained and serialized models, model predictions, model summaries
+    ├── models                   <- (Directory) Trained and serialized models
     │
-    ├── notebooks                <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                               the creator's initials, and a short `-` delimited description, e.g.
-    │                               `01-SG-initial-data-exploration` or `SG-20210315-initial-data-exploration`.
+    ├── notebooks                <- (Directory) Jupyter notebooks. Naming convention is the creator's initials,
+    │                               a number for ordering (typically the date), and a short `-` delimited description.
     │
-    ├── references               <- Data dictionaries, manuals, and all other explanatory materials. (TBC)
+    ├── references               <- (Directory) Reading material can be saved here.
     │
-    ├── outputs                  <- Model outputs, material for reporting (e.g. tabels, histograms, etc.)
+    ├── outputs                  <- (Directory) Model outputs, material for reporting (e.g. tabels, histograms, etc.)
     │   └── figures              <- Generated graphics and figures to be used in reporting
     │
-    └── src                      <- Source code for use in this project.
+    ├── TEST                     <- (Directory) Used for private experimentation
+    |
+    └── src                      <- (Directory) Source code for use in this project.
         ├── __init__.py          <- Makes src a Python module
         │
         ├── 00_utils             <- Functions used across the project
