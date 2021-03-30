@@ -250,6 +250,8 @@ def plot_losses(y_true, y_pred, y_train, title, xlabel, y_val=None, thres=None):
                          color=color,
                          )
         axs[0].axvline(thres, ymin=0, ymax=1, ls='--', color='black')
+        axs[0].annotate('Threshold', xy=(0.048, 80), xytext=(0.048, 80), 
+                        weight='bold', fontsize=15)
         axs[0].legend()
 
         for data, label, color in zip(right_datas, right_labels, right_cols):
@@ -261,6 +263,8 @@ def plot_losses(y_true, y_pred, y_train, title, xlabel, y_val=None, thres=None):
                          color=color,
                          )
         axs[1].axvline(thres, ymin=0, ymax=1, ls='--', color='black')
+        axs[1].annotate('Threshold', xy=(0.048, 25), xytext=(0.048, 25), 
+                        weight='bold', fontsize=15)
         axs[1].legend()
 
     plt.show()
