@@ -194,7 +194,7 @@ def kl_loss(model, scaler, dim, step, test_files):
 ##########################################################
 # Visualize the separation between train and test samples
 ##########################################################
-def plot_losses(y_true, y_pred, y_train, title, xlabel):
+def plot_losses(y_true, y_pred, y_train, title, xlabel, y_val=None, thres=None):
     """
     Plot the reco loss or kl-divergence
     for train and test samples.
@@ -205,36 +205,63 @@ def plot_losses(y_true, y_pred, y_train, title, xlabel):
     title: Figure title
     xlabel: Title of xlabel
     """
-    fig, ax = plt.subplots(figsize=(8, 5))
-    plt.title(title)
-
     test_normal = y_pred[np.array(y_true) == 0]
     test_abnormal = y_pred[np.array(y_true) == 1]
     train_normal = y_train
+    val_normal = y_val
 
-    sns.kdeplot(train_normal,
-                ax=ax,
-                label='Train',
-                color='red',
-                alpha=0.5,
-                common_norm=True
-                )
+    labels = ['Train', 'Test (normal)', 'Test (anomaly)']
+    colors = ['red', 'green', 'blue']
+    datas = [train_normal, test_normal, test_abnormal]
 
-    sns.kdeplot(test_normal,
-                ax=ax,
-                label='Test (normal)',
-                color='green',
-                alpha=0.5,
-                common_norm=True)
+    left_labels = ['Train', 'Validation']
+    right_labels = ['Test (normal)', 'Test (anomaly)']
+    left_cols = ['red', 'cyan'];
+    right_cols = ['green', 'blue']
+    left_datas = [train_normal, val_normal]
+    right_datas = [test_normal, test_abnormal]
 
-    sns.kdeplot(test_abnormal,
-                ax=ax,
-                label='Test (Anomaly)',
-                color='blue',
-                alpha=0.5,
-                common_norm=False)
+    if (y_val is None) & (thres is None):
+        fig, axs = plt.subplots(figsize=(8, 8))
+        plt.title(title)
+        plt.xlabel(xlabel)
+        for data, label, color in zip(datas, labels, colors):
+            sns.kdeplot(data,
+                        ax=axs,
+                        label=label,
+                        color=color,
+                        alpha=0.5,
+                        common_norm=True
+                        )
+        plt.legend()
+    else:
+        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16, 8))
+        axs[0].set_title("Train and validation data")
+        axs[1].set_title("Test data")
+        axs[0].set_xlabel(xlabel)
+        axs[1].set_xlabel(xlabel)
 
-    plt.legend()
-    plt.xlabel(xlabel)
+        for data, label, color in zip(left_datas, left_labels, left_cols):
+            sns.distplot(data,
+                         ax=axs[0],
+                         bins=20,
+                         kde=False,
+                         label=label,
+                         color=color,
+                         )
+        axs[0].axvline(thres, ymin=0, ymax=1, ls='--', color='black')
+        axs[0].legend()
+
+        for data, label, color in zip(right_datas, right_labels, right_cols):
+            sns.distplot(data,
+                         ax=axs[1],
+                         bins=20,
+                         kde=False,
+                         label=label,
+                         color=color,
+                         )
+        axs[1].axvline(thres, ymin=0, ymax=1, ls='--', color='black')
+        axs[1].legend()
+
     plt.show()
     plt.close()
