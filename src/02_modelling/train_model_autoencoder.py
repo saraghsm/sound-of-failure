@@ -115,12 +115,8 @@ def load_saved_model(model_path):
     At present only can be used to load model for inference.
     Not further further optimization.
     """
-    if os.path.exists(model_path):
-        loaded_model = tf.keras.models.load_model(model_path, 
+    loaded_model = tf.keras.models.load_model(model_path, 
                                               compile=False)
-    else:
-        print("Path {} to model does not "
-              "exist. Exiting...".format(model_path))
     return loaded_model
 
 

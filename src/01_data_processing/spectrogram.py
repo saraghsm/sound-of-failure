@@ -162,29 +162,44 @@ def make_mels(raw_data_dir, base_dir,
                 if overwrite:
                     os.remove(mel_path)
                 else:
-                    # Check compatibility of dimensions for one in ten existing spectrograms
-                    if num_existing % 10 == 0:
-                        mel = np.load(mel_path)
-                        assert mel.shape[0] == n_mels, \
-                            'Number of mel banks in existing spectrograms not compatible with argument n_mels. ' \
+                    # Check compatibility for 1 in 50 existing spectrograms
+                    if num_existing % 50 == 0:
+                        mel_loaded = np.load(mel_path)
+                        mel_created = mel_from_wav(wav_file, n_mels, n_fft, hop_length, power, window)
+                        assert (mel_loaded == mel_created).all(), \
+                            'Existing spectrograms not compatible with n_mels, n_fft, hop_length, power, window. ' \
                             'Rerun with overwrite=True.'
                     num_existing += 1
                     continue
 
             # Generate spectrogram and save
-            y, sr = librosa.load(wav_file, sr=None, mono=True)
-            mel = librosa.feature.melspectrogram(y=y, sr=sr,
-                                                 n_fft=n_fft,
-                                                 hop_length=hop_length,
-                                                 n_mels=n_mels,
-                                                 power=power,
-                                                 window=window)
-            mel = librosa.power_to_db(mel, ref=np.max)
+            mel = mel_from_wav(wav_file, n_mels, n_fft, hop_length, power, window)
             np.save(mel_path, mel)
             num_created += 1
 
         print(f'Created {num_created} new spectrograms, kept {num_existing} existing spectrograms.')
 
+def mel_from_wav(wav_file, n_mels, n_fft, hop_length, power, window):
+    """
+    Takes a wav file and converts it to a mel power spectrogram.
+    :param wav_file (str): path to wav file that is converted
+    :param n_fft (int): no.of samples in each frame
+    :param hop_length (int): hop samples
+    :param n_mels (int): no. of mel-bands
+    :param power (int): 1 for energy, 2 for power
+    :param window (str): 'STFT' window, e.g. 'Hann'
+
+    :return: mel power spectrogram (numpy.ndarray)
+    """
+    y, sr = librosa.load(wav_file, sr=None, mono=True)
+    mel = librosa.feature.melspectrogram(y=y, sr=sr,
+                                         n_fft=n_fft,
+                                         hop_length=hop_length,
+                                         n_mels=n_mels,
+                                         power=power,
+                                         window=window)
+    mel = librosa.power_to_db(mel, ref=np.max)
+    return mel
 
 
 def get_normal_mel_files(base_dir, db, machine_type, machine_id):
@@ -286,24 +301,10 @@ def apply_scaler_to_mel(scaler, mel):
     :param scaler (sklearn.preprocessing obj): scaler that is applied
     :param mel (numpy.ndarray): mel spectrogram
 
-    :return: scaled mel spectrogram
+    :return: scaled mel spectrogram (numpy.ndarray)
     """
     shape_ = mel.shape
     flat_mel = mel.flatten().reshape(-1, 1)
     scaled_flat_mel = scaler.transform(flat_mel)
     scaled_mel = scaled_flat_mel.reshape(shape_)
     return scaled_mel
-
-
-def load_saved_scaler(scaler_path):
-    """
-    Load the saved scaler from scaler_path.
-    This is useful to load an already fitted scaler
-    if it exists.
-    """
-    if os.path.exists(scaler_path):
-      loaded_scaler = load(scaler_path)
-    else:
-      print("Path {} to scaler does not "
-            "exist. Exiting...".format(scaler_path))
-    return loaded_scaler
