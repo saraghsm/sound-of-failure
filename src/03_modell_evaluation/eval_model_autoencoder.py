@@ -128,7 +128,7 @@ def plot_roc_curve(y_true, y_pred):
 ##########################################################
 
 
-def encode_spectrogram(model, scaler, dim, step, test_file):
+def encode_spectrogram(model, scaler, dim, step, test_file, direct_encoder=False):
     """
     Encode spectrogram to return the latent space
 
@@ -138,6 +138,8 @@ def encode_spectrogram(model, scaler, dim, step, test_file):
     step: Sliding window step for creating spectrogram
           chunks
     test_file: Path to the spectrogram
+    direct_encoder: Whether the given model is an autoencoder
+                    or direct encoder
     :return: Encoded representation of the original spectrogram
     """
     mel = np.load(test_file)
@@ -147,7 +149,10 @@ def encode_spectrogram(model, scaler, dim, step, test_file):
     batch = splt.subsample_from_mel(scaled_mel, dim, step)
 
     # Encoded test data in latent space
-    encoded_data = model.encoder.predict(batch)
+    if not direct_encoder:
+        encoded_data = model.encoder.predict(batch)
+    else:
+        encoded_data = model.predict(batch)
 
     return encoded_data
 
