@@ -308,3 +308,16 @@ def apply_scaler_to_mel(scaler, mel):
     scaled_flat_mel = scaler.transform(flat_mel)
     scaled_mel = scaled_flat_mel.reshape(shape_)
     return scaled_mel
+
+
+def load_saved_scaler(scaler_path):
+    """
+    Load the saved scaler from scaler_path.
+    This is useful to load an already fitted scaler
+    if it exists.
+    """
+    if os.path.exists(scaler_path):
+      loaded_scaler = load(scaler_path)
+    else:
+      print("Path {} to scaler does not exist. Exiting...".format(scaler_path))
+    return loaded_scaler
