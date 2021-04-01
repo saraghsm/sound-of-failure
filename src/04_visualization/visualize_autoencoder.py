@@ -92,13 +92,18 @@ def encode_test_files(model,
 ##########################################################
 
 
-def plot_spectrogram(spec_file, sr):
+def plot_spectrogram(spec_file, sr, ndarray=False):
     """
     Plot a spectrogram from the 'spec_file'
     having a given sampling rate 'sr'
     """
     fig, ax = plt.subplots()
-    img = ld.specshow(np.load(spec_file),
+    if not ndarray:
+        spectrogram = np.load(spec_file)
+    else:
+        spectrogram = spec_file
+
+    img = ld.specshow(spectrogram,
                       x_axis='time',
                       y_axis='mel',
                       sr=sr,
@@ -106,8 +111,7 @@ def plot_spectrogram(spec_file, sr):
                       ax=ax)
 
     fig.colorbar(img, ax=ax)
-    plt.show()
-    plt.close()
+    return fig
 
 
 def render_predictions(original_spec, reconstructed_spec, sr):
