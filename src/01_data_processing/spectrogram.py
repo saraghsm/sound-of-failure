@@ -295,7 +295,7 @@ def fit_and_save_scaler(scaler_type, file_list, scaler_path, overwrite=False):
     return scaler
 
 
-def apply_scaler_to_mel(scaler, mel):
+def apply_scaler_to_mel(scaler, mel, inverse=False):
     """
     Function for applying a fitted normalizer/scaler (sklearn.preprocessing) to a single mel spectrogram.
     :param scaler (sklearn.preprocessing obj): scaler that is applied
@@ -305,7 +305,10 @@ def apply_scaler_to_mel(scaler, mel):
     """
     shape_ = mel.shape
     flat_mel = mel.flatten().reshape(-1, 1)
-    scaled_flat_mel = scaler.transform(flat_mel)
+    if inverse:
+        scaled_flat_mel = scaler.inverse_transform(flat_mel)
+    else:
+        scaled_flat_mel = scaler.transform(flat_mel)
     scaled_mel = scaled_flat_mel.reshape(shape_)
     return scaled_mel
 

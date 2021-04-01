@@ -87,6 +87,49 @@ def reco_loss(model, scaler, dim, step, test_files, as_images=True):
         y_pred[idx] = reconstruction_error
     return y_pred
 
+def reco_loss_over_time(model, scaler, mel_file, dim, step, as_images=True):
+  """
+  Calculates the reconstruction error of a mel spectrogram over time. The
+  spectrogram is split into smaller time windows (sclices) to which the
+  autoencoder model is applied. The mean reconstruction error is assigned to the
+  mean time of the respective time window.
+  :param model (tensorflow mode): trained autoencoder
+  :param scaler (sklearn.preprocessing obj): scaler that is applied
+  :param mel_file (str): path to spectrogram
+  :param dim (int): dimension of time slices
+  :param step (int): step of sliding window
+  :as_images (bool): flag to control if spectrograms are processed as images (with one gray scale channel)
+
+  :return: times and reconstruction error by time
+  """
+  mel = np.load(mel_file)
+  # Make times array
+  t0 = 0
+  t1 = mel.shape[1]
+  total_sec = 10
+  times = np.arange(t0, t1-dim+step, step)
+  times = [min(t, t1-dim) + dim/2 for t in times]
+  times = [t0] + times + [t1]
+  times = np.array([total_sec*t/t1 for t in times])
+  # Make errors array
+  orig_slices, dec_slices = decode_spectrogram(model,
+                                               scaler,
+                                               dim,
+                                               step,
+                                               mel_file,
+                                               as_images)
+
+  squared_error = np.square(orig_slices - dec_slices)
+  if as_images:
+    squared_error = squared_error[:,:,:,0]
+  channelwise_error = np.mean(squared_error, axis=-1)
+  timewise_recon_error = np.mean(channelwise_error, axis=-1)
+  timewise_recon_error = np.append(timewise_recon_error[0],
+                                   np.append(timewise_recon_error,
+                                             timewise_recon_error[-1]))
+
+  return times, timewise_recon_error
+
 ##########################################################
 # Visualize ROC Curve as Classification metrics
 ##########################################################
