@@ -148,8 +148,9 @@ def render_predictions(original_spec, reconstructed_spec, sr):
         axs[0, index].set_title("Original")
         axs[1, index].set_title("Reconstructed")
 
-    plt.show()
-    plt.close()
+    #plt.show()
+    #plt.close()
+    return fig
 
 
 def Tsne_Projection_Of_Latent(data, data_label):
