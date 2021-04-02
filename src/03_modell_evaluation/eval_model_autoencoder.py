@@ -30,7 +30,7 @@ import train_test_split as splt
 
 
 ##########################################################
-# Deocode spectrograms and calculare Reconstruction loss
+# Deocode spectrograms and calculate Reconstruction loss
 ##########################################################
 
 def decode_spectrogram(model, scaler, dim, step, test_file, as_images=True, ndarray=False):
@@ -112,7 +112,6 @@ def reco_loss_over_time(model, scaler, mel_file, dim, step, as_images=True):
   total_sec = 10
   times = np.arange(t0, t1-dim+step, step)
   times = [min(t, t1-dim) + dim/2 for t in times]
-  times = [t0] + times + [t1]
   times = np.array([total_sec*t/t1 for t in times])
   # Make errors array
   orig_slices, dec_slices = decode_spectrogram(model,
@@ -127,9 +126,6 @@ def reco_loss_over_time(model, scaler, mel_file, dim, step, as_images=True):
     squared_error = squared_error[:,:,:,0]
   channelwise_error = np.mean(squared_error, axis=-1)
   timewise_recon_error = np.mean(channelwise_error, axis=-1)
-  timewise_recon_error = np.append(timewise_recon_error[0],
-                                   np.append(timewise_recon_error,
-                                             timewise_recon_error[-1]))
 
   return times, timewise_recon_error
 
