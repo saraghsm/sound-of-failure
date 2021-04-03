@@ -4,7 +4,7 @@ import numpy as np
 from plotly.subplots import make_subplots
 from scipy import interpolate
 
-sys.path += ['src/01_data_processing', 'src/02_modelling', 'src/03_modell_evaluation','src/00_utils']
+sys.path += ['src/01_data_processing', 'src/02_modelling', 'src/03_modell_evaluation', 'src/00_utils']
 
 import spectrogram as spec
 import train_test_split as splt
@@ -39,15 +39,6 @@ def make_invisible_error_traces(timewise_recon_error, times, thresh):
     above_thresh[above_thresh < thresh] = np.nan
     below_thresh[below_thresh > thresh] = np.nan
 
-    text_trace = dict(visible=False,
-                      type='scatter',
-                      x=[9],
-                      y=[thresh + 0.005],
-                      mode='text',
-                      text='threshold',
-                      textposition='top center',
-                      showlegend=False)
-
     thresh_trace = dict(visible=False,
                         type='scatter',
                         x=[0, 10],
@@ -72,7 +63,7 @@ def make_invisible_error_traces(timewise_recon_error, times, thresh):
                        mode='lines',
                        showlegend=False)
 
-    return above_trace, below_trace, thresh_trace, text_trace
+    return above_trace, below_trace, thresh_trace
 
 
 def make_ref_thresh_trace_error(ref_thresh, thresh_range):
@@ -106,7 +97,7 @@ def make_mean_error_trace(mean_recon_error):
                             marker=dict(size=8,
                                         color='black',
                                         line=dict(width=2, color='black')),
-                            name='sample<br>error',
+                            name='mean error of<br>sample + percentile',
                             showlegend=True)
     return mean_error_trace
 
@@ -144,7 +135,7 @@ def make_hist_traces(reco_loss_train, ref_thresh, thresh_range):
     ref_thresh_trace = dict(visible=True,
                             type='scatter',
                             x=[ref_thresh, ref_thresh],
-                            y=[0, 85],
+                            y=[0, 100],
                             mode='lines',
                             line=dict(color='black', dash='dash', width=1),
                             name='recommended<br>threshold',
@@ -173,13 +164,13 @@ def make_sliders(thresh_range, active_step, num_visible, num_invisible):
     return sliders
 
 
-def make_figure_layout(fig, sliders, mel):
+def make_figure_layout(fig, sliders, mel, width=600, height=1000):
     """
     Make layout for figure with three subplots for mel spectrogram, error over time and training error distribution.
     """
     fig.update_layout(
-        height=900,
-        width=450,
+        height=height,
+        width=width,
         xaxis1=dict(
             tickmode='array',
             tickvals=np.linspace(0, mel.shape[1] - 1, 6),
@@ -194,6 +185,7 @@ def make_figure_layout(fig, sliders, mel):
         yaxis3=dict(range=[0, 100]),
         sliders=sliders,
         legend=dict(
+            traceorder='reversed',
             font=dict(size=10),
             yanchor="top",
             y=0.275,
@@ -201,7 +193,16 @@ def make_figure_layout(fig, sliders, mel):
             x=0.99))
 
 
-def make_eval_visualisation(mel_file, model, scaler, reco_loss_train, dim, step, thresh_range, ref_thresh,
+def make_eval_visualisation(mel_file,
+                            model,
+                            scaler,
+                            reco_loss_train,
+                            dim, step,
+                            thresh_range,
+                            ref_thresh,
+                            width=600,
+                            height=1000,
+                            status_bar_width=0.025,
                             as_images=True):
     """
     Call functions in this module to make a visualization for a given mel spectrogram file.
@@ -221,7 +222,8 @@ def make_eval_visualisation(mel_file, model, scaler, reco_loss_train, dim, step,
 
     # Generate figure with two subplots
     fig = make_subplots(rows=3, cols=1, vertical_spacing=0.05,
-                        subplot_titles=('spectrogram', 'reconstruction error', 'error distribution training'),
+                        subplot_titles=(
+                        'spectrogram', 'reconstruction error over time', 'mean error distribution training'),
                         shared_xaxes=False)
 
     ########################
@@ -252,6 +254,60 @@ def make_eval_visualisation(mel_file, model, scaler, reco_loss_train, dim, step,
         fig.add_trace(trace, row=3, col=1)
         num_visible += 1
 
+    # Third row: percentile label
+    xlo = mean_recon_error - 0.006
+    xhi = mean_recon_error + 0.006
+    ylo = 9
+    yhi = 15
+    percentage_box_trace = dict(visible=True,
+                                showlegend=False,
+                                type='scatter',
+                                mode='lines',
+                                x=[xlo, xlo, xhi, xhi, xlo],
+                                y=[ylo, yhi, yhi, ylo, ylo],
+                                fill='toself',
+                                fillcolor='white',
+                                line=dict(width=0))
+
+    percentage = str(round(sum(sorted(reco_loss_train) < mean_recon_error) / len(reco_loss_train) * 100, 2))
+    percentage_text_trace = dict(visible=True, type='scatter',
+                                 x=[(xhi + xlo) / 2], y=[(yhi + ylo) / 2],
+                                 mode='text',
+                                 text=percentage + '%',
+                                 textposition='middle center',
+                                 showlegend=False)
+    fig.add_trace(percentage_box_trace, row=3, col=1)
+    fig.add_trace(percentage_text_trace, row=3, col=1)
+    num_visible += 1
+
+    # Second row: status box
+    xlo = 7.5
+    xhi = 9.5
+    yhi = 0.185
+    ylo = yhi-status_bar_width
+    status_box_trace = dict(visible=True,
+                            showlegend=False,
+                            type='scatter',
+                            mode='lines',
+                            x=[xlo, xlo, xhi, xhi, xlo],
+                            y=[ylo, yhi, yhi, ylo, ylo],
+                            fill='toself',
+                            fillcolor='white',
+                            line=dict(width=0))
+    fig.add_trace(status_box_trace, row=2, col=1)
+    num_visible += 1
+
+    status_text_trace = dict(visible=True,
+                             type='scatter',
+                             x=[xlo + 0.1 * (xhi - xlo)],
+                             y=[ylo + 0.5 * (yhi - ylo)],
+                             mode='text',
+                             text='Status',
+                             textposition='middle right',
+                             showlegend=False)
+    fig.add_trace(status_text_trace, row=2, col=1)
+    num_visible += 2
+
     #########################
     # INVISIBLE TRACES LAST #
     #########################
@@ -264,9 +320,26 @@ def make_eval_visualisation(mel_file, model, scaler, reco_loss_train, dim, step,
         for trace in invisible_error_traces:
             fig.add_trace(trace, row=2, col=1)
             num_invisible += 1
+        # Second row: status
+        if mean_recon_error > thresh:
+            color = 'red'
+        else:
+            color = 'green'
+        status_trace = dict(visible=False,
+                            type='scatter',
+                            x=[xlo + 0.8 * (xhi - xlo)],
+                            y=[ylo + 0.5 * (yhi - ylo)],
+                            mode='markers',
+                            marker=dict(size=18,
+                                        color=color,
+                                        line=dict(width=0)),
+                            showlegend=False)
+        fig.add_trace(status_trace, row=2, col=1)
+        num_invisible += 1
+
         # Third row: vertical threshold line
         invisible_hist_trace = dict(visible=False, type='scatter',
-                                    x=[thresh, thresh], y=[0, 85],
+                                    x=[thresh, thresh], y=[0, 100],
                                     mode='lines', line=dict(color='black', width=2),
                                     name='threshold', showlegend=True)
         fig.add_trace(invisible_hist_trace, row=3, col=1)
@@ -285,5 +358,5 @@ def make_eval_visualisation(mel_file, model, scaler, reco_loss_train, dim, step,
     sliders = make_sliders(thresh_range, active_step, num_visible, num_invisible)
 
     # Make figure layout and show
-    make_figure_layout(fig, sliders, mel)
-    fig.show()
+    make_figure_layout(fig, sliders, mel, width, height)
+    return fig
