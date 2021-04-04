@@ -164,7 +164,7 @@ def make_sliders(thresh_range, active_step, num_visible, num_invisible):
     return sliders
 
 
-def make_figure_layout(fig, sliders, mel, width=600, height=1000):
+def make_figure_layout(fig, sliders, mel, thresh_range, width=600, height=1000):
     """
     Make layout for figure with three subplots for mel spectrogram, error over time and training error distribution.
     """
@@ -181,7 +181,7 @@ def make_figure_layout(fig, sliders, mel, width=600, height=1000):
             ticktext=[0, 512, 1024, 2048, 4096, 8000],
             title='Hz'),
         yaxis2=dict(range=[0, 0.2]),
-        xaxis3=dict(range=[0, 0.1]),
+        xaxis3=dict(range=[thresh_range[0], thresh_range[-1]]),
         yaxis3=dict(range=[0, 100]),
         sliders=sliders,
         legend=dict(
@@ -255,8 +255,9 @@ def make_eval_visualisation(mel_file,
         num_visible += 1
 
     # Third row: percentile label
-    xlo = mean_recon_error - 0.006
-    xhi = mean_recon_error + 0.006
+    x_range = thresh_range[-1] - thresh_range[0]
+    xlo = mean_recon_error - 0.055*x_range
+    xhi = mean_recon_error + 0.055*x_range
     ylo = 9
     yhi = 15
     percentage_box_trace = dict(visible=True,
@@ -358,5 +359,5 @@ def make_eval_visualisation(mel_file,
     sliders = make_sliders(thresh_range, active_step, num_visible, num_invisible)
 
     # Make figure layout and show
-    make_figure_layout(fig, sliders, mel, width, height)
+    make_figure_layout(fig, sliders, mel, thresh_range, width, height)
     return fig
