@@ -156,7 +156,7 @@ def plot_roc_curve(y_true, y_pred):
     """
     fpr, tpr, thres = metrics.roc_curve(y_true, y_pred)
     auc_score = roc_auc_score(y_true, y_pred)
-    plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(6, 6))
     plt.plot(fpr, tpr, linestyle='--',
              label="AUC:{:.2f}".format(auc_score))
     plt.xlabel("False positive rate")
@@ -164,6 +164,7 @@ def plot_roc_curve(y_true, y_pred):
     plt.legend()
     plt.show()
     plt.close()
+    return fig
 
 ##########################################################
 # Encode spectrograms and calculare KL-divergence loss
@@ -314,5 +315,4 @@ def plot_losses(y_true, y_pred, y_train, title, xlabel, y_val=None, thres=None):
                         weight='bold', fontsize=15)
         axs[1].legend()
 
-    plt.show()
-    plt.close()
+    return fig

@@ -111,13 +111,13 @@ def load_saved_model(model_path):
     Load the saved model from model_path.
     This is useful to load an already trained model
     if ModelCheckpoint is used to save the best model.
-
+    
     At present only can be used to load model for inference.
     Not further further optimization.
     """
     if os.path.exists(model_path):
-        loaded_model = tf.keras.models.load_model(model_path,
-                                                  compile=False)
+        loaded_model = tf.keras.models.load_model(model_path, 
+                                              compile=False)
     else:
         print("Path {} to model does not exist. Exiting...".format(model_path))
     return loaded_model
@@ -220,7 +220,7 @@ def train_model(model,
 # Plot the training loss curves
 ##########################################################
 def plot_train_history(history):
-    plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(6, 6))
     plt.plot(history.history['loss'], label='loss')
     plt.plot(history.history['val_loss'], label='val_loss')
     plt.legend()
@@ -228,4 +228,5 @@ def plot_train_history(history):
     plt.ylabel("Loss")
     plt.show()
     plt.close()
+    return fig
 

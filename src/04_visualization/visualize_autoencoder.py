@@ -83,14 +83,12 @@ def encode_test_files(model,
             encoded_test_logvar = z_logvar
         else:
             encoded_test_mean = np.concatenate((encoded_test_mean, z_mean))
-            encoded_test_logvar = np.concatenate(
-                (encoded_test_logvar, z_logvar))
+            encoded_test_logvar = np.concatenate((encoded_test_logvar, z_logvar))
     return encoded_test_mean, encoded_test_logvar
 
 ##########################################################
 # Plotting functions
 ##########################################################
-
 
 def plot_spectrogram(spec_file, sr, ndarray=False):
     """
@@ -111,6 +109,8 @@ def plot_spectrogram(spec_file, sr, ndarray=False):
                       ax=ax)
 
     fig.colorbar(img, ax=ax)
+    #plt.show()
+    #plt.close()
     return fig
 
 
@@ -120,14 +120,19 @@ def render_predictions(original_spec, reconstructed_spec, sr):
     (the slices come by subsampling a bigger spectrogram),
     plot them one below the other.
     """
-    fig, axs = plt.subplots(2, 10, figsize=(50, 10))
+    fig, axs = plt.subplots(3, 5, figsize=(9, 4))
+    
 
-    for index in range(10):
+    for index in np.arange(5, 10):
         image_in = original_spec[index].reshape(original_spec[0].shape[0],
                                                 original_spec[0].shape[1])
 
         image_out = reconstructed_spec[index].reshape(reconstructed_spec[0].shape[0],
                                                       reconstructed_spec[0].shape[1])
+                                                      
+        reco_error = np.square(image_in - image_out)
+        index -= 5
+                                                      
 
         orig = ld.specshow(image_in.T,
                            x_axis='time',
@@ -144,9 +149,21 @@ def render_predictions(original_spec, reconstructed_spec, sr):
                            fmax=sr * 0.5,
                            ax=axs[1, index],
                            cmap='inferno')
+                           
+        err = ld.specshow(reco_error.T,
+                           x_axis='time',
+                           y_axis='mel',
+                           sr=sr,
+                           fmax=sr * 0.5,
+                           ax=axs[2, index],
+                           cmap='inferno')
 
-        axs[0, index].set_title("Original")
-        axs[1, index].set_title("Reconstructed")
+        axs[0, index].set_title("Original", fontsize=8)
+        axs[0, index].axis('off')
+        axs[1, index].set_title("Reconstructed", fontsize=8)
+        axs[1, index].axis('off')
+        axs[2, index].set_title("Squared error", fontsize=8)
+        axs[2, index].axis('off')
 
     #plt.show()
     #plt.close()
@@ -154,19 +171,22 @@ def render_predictions(original_spec, reconstructed_spec, sr):
 
 
 def Tsne_Projection_Of_Latent(data, data_label):
-    """
-    Perform dimensionality reduction on the latent spae
-    to reduce it to 2 dimensions using TSNE and visualize
-    the latent space encodings.
-    """
+  """
+  Perform dimensionality reduction on the latent spae
+  to reduce it to 2 dimensions using TSNE and visualize
+  the latent space encodings.
+  """
 
-    tsne_latent = manifold.TSNE(n_components=2, init='pca', random_state=0)
+  tsne_latent = manifold.TSNE(n_components=2, init='pca', random_state=0)
 
-    X_tsne = tsne_latent.fit_transform(data)
+  X_tsne = tsne_latent.fit_transform(data)
 
-    plt.figure(figsize=(6, 6))
-    plt.scatter(X_tsne[:, 0], X_tsne[:, 1],  c=data_label, cmap='inferno')
-    #sns.scatterplot(x=X_tsne[:, 0], y=X_tsne[:, 1], hue=data_label, cmap="inferno")
-    plt.colorbar()
-    plt.show()
-    plt.close()
+  fig = plt.figure(figsize=(6,6))
+  plt.scatter(X_tsne[:, 0], X_tsne[:, 1],  c=data_label, cmap='inferno')
+  #sns.scatterplot(x=X_tsne[:, 0], y=X_tsne[:, 1], hue=data_label, cmap="inferno")
+  plt.colorbar()
+  plt.show()
+  plt.close()
+  return fig
+
+
