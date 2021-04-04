@@ -6,7 +6,7 @@ plotly==4.4.1
 click==7.1.2
 scipy==1.4.1
 pandas==1.1.5
-ngdlm==0.0.3
+git+https://github.com/AI-Guru/ngdlm.git
 librosa==0.8.0
 matplotlib==3.2.2
 numpy==1.19.5
