@@ -10,6 +10,6 @@ git+https://github.com/AI-Guru/ngdlm.git
 librosa==0.8.0
 matplotlib==3.2.2
 numpy==1.19.5
-ipython==7.22.0
+ipython==7.16.1
 python-dotenv==0.17.0
 scikit_learn==0.24.1
