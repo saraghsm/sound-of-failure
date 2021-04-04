@@ -85,7 +85,7 @@ saved_scaler = spec.load_saved_scaler(path_saved_scaler)
 # Load Reconstruction Loss of all training data
 ##########################################################
 
-file_name = run_id + '_final_reco_loss_train.npy'
+file_name = run_id + '_reco_loss_train.npy'
 file_path = os.path.join(BASE_DIR, 'models', file_name)
 reco_loss_train = np.load(file_path)
 
