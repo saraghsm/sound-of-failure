@@ -82,30 +82,33 @@ saved_scaler = spec.load_saved_scaler(path_saved_scaler)
 ##########################################################
 
 def build_header(header):
-    header.title("Reconstruction of Machine Sounds using Autoencoders")
+    header.title("AI-Based Sound Analysis")
 
 def build_body(body):
-    body.header("Our Strategy")
-    body.write("We have built an AI for detecting machine malfunctions from sound which works on the principles"
-               " of unsupervised sound anomaly detection."
-               " We use Autoencoders for this purpose. The sounds converted to Mel spectrograms"
-               " is normalized and broken down into smaller chunks by subsampling."
-               " The samples are then passed through the trained Autoencoder which then"
-               " reconstructs the input spectrogram. If the reconstruction is good,"
-               " the reconstruction error (the squared difference between the input and"
-               " reconstructed spectrograms) will be small and large otherwise."
-               " Small reconstruction error corresponds to mostly black pixels in the"
-               " reconstruction error plot.")
+    body.header("Detecting abnormal sounds")
+    body.write("We use a deep autoencoder that is trained to reconstruct sounds of normal functioning machines. "
+               "Abnormal sounds are reconstructed worse. This indicates a potential machine failure.")
+
+    #body.write("We have built an AI for detecting machine malfunctions from sound which works on the principles"
+    #           " of unsupervised sound anomaly detection."
+    #           " We use Autoencoders for this purpose. The sounds converted to Mel spectrograms"
+    #           " is normalized and broken down into smaller chunks by subsampling."
+    #           " The samples are then passed through the trained Autoencoder which then"
+    #           " reconstructs the input spectrogram. If the reconstruction is good,"
+    #           " the reconstruction error (the squared difference between the input and"
+    #           " reconstructed spectrograms) will be small and large otherwise."
+    #           " Small reconstruction error corresponds to mostly black pixels in the"
+    #           " reconstruction error plot.")
 
     # Load data
-    body.subheader("1. Data Loading")
+    #body.subheader("1. Data Loading")
     file = file_selector(body, BASE_DIR) 
     
     # Button to do analysis
     do_analysis = body.button("Perform Analysis")
     
     # Preprocess data
-    body.subheader("2. Data Preprocessing")
+    body.subheader("1. Input Data")
     
     ##########################################################
     # Create Mel spectrograms
@@ -114,8 +117,8 @@ def build_body(body):
     mel_container = body.beta_container()
 
     # Mel spectrogram generation
-    mel_container.subheader("1.1. Create Mel-Spectrograms")
-    mel_container.write("We convert the raw audios into Mel spectrograms.")
+    #mel_container.subheader("1.1. Create Mel-Spectrograms")
+    mel_container.write("Mel spectrogram")
     mel = spec.mel_from_wav(file,
                             n_mels=N_MELS,
                             n_fft=N_FFT,
@@ -130,16 +133,16 @@ def build_body(body):
     # Normalize Mel spectrograms
     ##########################################################
     # Define Scale containers
-    scale_container = body.beta_container()
+    #scale_container = body.beta_container()
 
     # Scale Mel spectrogram
-    scale_container.subheader("1.2. Normalize Mel-Spectrograms")
-    scale_container.write("We normalize the Mel spectrograms with zero mean and unit standard deviation.")
-    scaled_mel = spec.apply_scaler_to_mel(saved_scaler, mel)
+    #scale_container.subheader("1.2. Normalize Mel-Spectrograms")
+    #scale_container.write("We normalize the Mel spectrograms with zero mean and unit standard deviation.")
+    #scaled_mel = spec.apply_scaler_to_mel(saved_scaler, mel)
     
-    if do_analysis:
-            fig2 = vizae.plot_spectrogram(scaled_mel, 16000, ndarray=True)
-            scale_container.pyplot(fig2)
+    #if do_analysis:
+    #        fig2 = vizae.plot_spectrogram(scaled_mel, 16000, ndarray=True)
+    #        scale_container.pyplot(fig2)
             
     ##########################################################
     # Subsamle Mel spectrograms
@@ -157,10 +160,9 @@ def build_body(body):
     # Define subsample containers
     subsample_container = body.beta_container()
     # Subsample Mel spectrogram
-    subsample_container.subheader("1.3. Subsample Mel-Spectrograms")
+    #subsample_container.subheader("Subsampling")
     #subsample_mel = subsample_container.button("Subsample Mel")
-    subsample_container.write("We take the scaled Mel spectrograms for the entire audio"
-                           " and subsample it down into smaller segments.")
+    subsample_container.write("Subsampling (sliding 1 sec time window)")
     if do_analysis:
             fig3 = render_subsamples(orig, sr=16000)
             subsample_container.pyplot(fig3)
@@ -172,13 +174,19 @@ def build_body(body):
     pred_container = body.beta_container()
     
     # Model predictions
-    pred_container.subheader("3. Model predictions")
-    pred_container.write(" Each Mel spectrogram subsample"
-                           " is then passed through the Autoencoder"
-                           " which then reconstructs back each slice.")
+    pred_container.subheader("2. Sound Reconstruction with Autoencoder")
+    pred_container.write("The autoencoder produces a reconstruction of each subsample. "
+                         "The reconstruction error is the squared difference between input and output. "
+                         "Low values (black pixels) indicate good reconstruction.")
+
+    #           " reconstructs the input spectrogram. If the reconstruction is good,"
+    #           " the reconstruction error (the squared difference between the input and"
+    #           " reconstructed spectrograms) will be small and large otherwise."
+    #           " Small reconstruction error corresponds to mostly black pixels in the"
+    #           " reconstruction error plot.")
 
     # Batch predictions
-    pred_container.subheader("3.1. Comparison of the original and reconstructed spectrograms")
+    #pred_container.subheader("3.1. Comparison of the original and reconstructed spectrograms")
     
     #decode_mel = pred_container.button("Decode Mel")
     if do_analysis:
@@ -197,7 +205,7 @@ def file_upload(container, type):
 def file_selector(container, base, type='normal'):
     normal_wav_path = os.path.join(BASE_DIR, 'streamlit/data', '*_00000000.wav')
     normal_wav_files = sorted(glob.glob(os.path.join(normal_wav_path)))
-    return container.selectbox('Select A Sound', normal_wav_files, index=1)
+    return container.selectbox('select', normal_wav_files, index=1)
     
     
 def render_subsamples(original_spec, sr):

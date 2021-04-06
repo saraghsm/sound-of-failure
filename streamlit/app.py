@@ -30,9 +30,9 @@ BASE_DIR = "./" #base_conf['directories']['base_dir']
 
 # Sidebar
 sidebar = st.sidebar.radio("Pages", ["Home",
-                                     "Data Exploration",
-                                     "Data Analysis",
-                                     "Predictions"])
+                                     "Exploration",
+                                     "Analysis",
+                                     "Diagnosis"])
 
 if sidebar == "Home":
     # home.print_home()
@@ -47,7 +47,7 @@ if sidebar == "Home":
     home.build_body(home_body)
 
 
-if sidebar == "Data Exploration":
+if sidebar == "Exploration":
     #viz.print_home()
     exp_header = st.beta_container()
     exp_body = st.beta_container()
@@ -61,7 +61,7 @@ if sidebar == "Data Exploration":
 
 
 
-if sidebar == "Data Analysis":
+if sidebar == "Analysis":
     # pred.print_home()
     ana_header = st.beta_container()
     ana_body = st.beta_container()
@@ -73,7 +73,7 @@ if sidebar == "Data Analysis":
     ana.build_body(ana_body)
 
 
-if sidebar == "Predictions":
+if sidebar == "Diagnosis":
     #mod.print_home()
     
     pred_header = st.beta_container()

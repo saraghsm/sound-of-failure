@@ -36,52 +36,52 @@ def upload_image(container, img):
     
 
 def build_header(header):
-    header.title("Know Your Machine Sound")
+    header.title("Comparison of Normal and Abnormal Sounds")
     
 
 
 def build_body(body):
-    body.header("How We Visualize Machine Sounds")
-    body.write("We convert the audio problem into "
-               " a computer vision problem, i.e."
-               " we 'see' the sound! We convert"
-               " the raw waveform into its time-frequency"
-               " representation known as Mel spectrograms."
-               " Then we extract features from Mel spectrograms"
-               " while training and evaluating using "
-               " Machine Learning models.")
+    body.header("Audio and Mel Spectrogram")
+#    body.write("We convert the audio problem into "
+#               " a computer vision problem, i.e."
+#               " we 'see' the sound! We convert"
+#               " the raw waveform into its time-frequency"
+#               " representation known as Mel spectrograms."
+#               " Then we extract features from Mel spectrograms"
+#               " while training and evaluating using "
+#               " Machine Learning models.")
 
     normal_col, abnormal_col = body.beta_columns(2)
 
     # Choose a normal sound
-    normal_col.subheader("Upload a Normal Machine")
+    normal_col.subheader("Normal Sound")
     file_normal = file_selector(normal_col, BASE_DIR, type='normal') 
 
     # Choose an abnormal sound
-    abnormal_col.subheader("Upload an Abnormal Machine")
+    abnormal_col.subheader("Abnormal Sound")
     file_abnormal = file_selector(abnormal_col, BASE_DIR, type='abnormal')
 
     # Play normal sound
-    normal_col.subheader("Listen to a Normal Machine")
+    #normal_col.subheader("Play Sound")
     sound_normal = play_sound(normal_col, file_normal)
 
     # Play abnormal sound
-    abnormal_col.subheader("Listen to an Abnormal Machine")
+    #abnormal_col.subheader("Play Sound")
     sound_abnormal = play_sound(abnormal_col, file_abnormal)
 
     # Mel spectrograms normal machine
-    normal_col.subheader("Mel-Spectrogram: Normal Machine")
+    #normal_col.subheader("Mel Spectrogram")
     n_fft_norm = normal_col.selectbox('n_fft', [256, 512, 1024], index=2)
     n_mels_norm = normal_col.selectbox('n_mels', [16, 32, 64, 128], index=1)
 
     # Mel spectrograms abnormal machine
-    abnormal_col.subheader("Mel-Spectrogram: Abnormal Machine")
+    #abnormal_col.subheader("Mel Spectrogram")
     n_fft_abnorm = abnormal_col.selectbox('n_fft', [256, 512, 1024], index=1)
     n_mels_abnorm = abnormal_col.selectbox('n_mels', [16, 32, 64, 128], index=2)
 
     # Submit button
-    submit_mel_params_norm = normal_col.button("Submit")
-    submit_mel_params_abnorm = abnormal_col.button("submit")
+    submit_mel_params_norm = normal_col.button("Create Mel Spectrogram")
+    submit_mel_params_abnorm = abnormal_col.button("Create Mel Spectrogram ")
     if submit_mel_params_norm or submit_mel_params_abnorm:
 
         mel_norm = spec.mel_from_wav(file_normal,
@@ -115,7 +115,7 @@ def file_upload(container, type):
 def file_selector(container, base, type='normal'):
     normal_wav_path = os.path.join(base, 'streamlit/data', type+'_*.wav')
     normal_wav_files = sorted(glob.glob(os.path.join(normal_wav_path)))
-    return container.selectbox('Select A Sound', normal_wav_files, index=1)
+    return container.selectbox('select', normal_wav_files, index=1)
 
 
 def play_sound(container, file):

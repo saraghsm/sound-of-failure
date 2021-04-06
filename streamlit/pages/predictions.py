@@ -94,21 +94,23 @@ reco_loss_train = np.load(file_path)
 ##########################################################
     
 def build_header(header):
-    header.title("Diagnosing Machine Malfunctions from Their Acoustic Footprint")
+    header.title("Diagnose Machine Status")
     
 def build_body(body):
-    body.header("The Machine Sound Reconstruction Error")
-    body.write("Our Autoencoder model takes a Mel spectrogram as input,"
-    " and reconstructs the original Mel spectrogram from a latent space."
-    " Since our Autoencoder is trained on only normal sounds, it can"
-    " reconstruct well a sound from an unknwon/previously unseen normal machine state"
-    " with a small reconstruction error. If on the other hand an abnormal machine sound"
-    " is given as input the reconstruction error will be higher. We define a threshold on the reconstruction error, derived"
-    " from normal machine sounds. If the average reconstruction error is higher than the threshold, "
-    " we tag the data as anomaly indicating a machine malfunction.")
+    body.header("Use Reconstruction Error to Detect Machine Failure")
+    body.write("A large reconstruction error indicates potential malfunction. The error varies over time. To "
+               "diagnose the status of a machine, the error is averaged and compared to a threshold."
+               "")
+#    " and reconstructs the original Mel spectrogram from a latent space."
+#    " Since our Autoencoder is trained on only normal sounds, it can"
+#    " reconstruct well a sound from an unknwon/previously unseen normal machine state"
+#    " with a small reconstruction error. If on the other hand an abnormal machine sound"
+#    " is given as input the reconstruction error will be higher. We define a threshold on the reconstruction error, derived"
+#    " from normal machine sounds. If the average reconstruction error is higher than the threshold, "
+#    " we tag the data as anomaly indicating a machine malfunction.")
     
     # Load data
-    body.subheader("1. Data Loading")
+    #body.subheader("1. Data Loading")
     file = file_selector(body, BASE_DIR) 
     
     # Create Mel spectrogram under the hood
@@ -119,8 +121,8 @@ def build_body(body):
                             base=BASE_DIR) 
                             
     # Predict Reconstruction loss
-    body.subheader("2. Predict Reconstruction Error")
-    show_results = st.checkbox('Show Results')
+#    body.subheader("Diagnose Machine Status")
+    show_results = st.checkbox('Show Diagnosis')
     if show_results:
         with session.as_default():
             with session.graph.as_default():
@@ -146,7 +148,7 @@ def file_upload(container, type):
 def file_selector(container, base, type='normal'):
     normal_wav_path = os.path.join(BASE_DIR, 'streamlit/data', '*.wav')
     normal_wav_files = sorted(glob.glob(os.path.join(normal_wav_path)))
-    return container.selectbox('Select A Sound', normal_wav_files, index=1)
+    return container.selectbox('select', normal_wav_files, index=1)
     
     
 def make_mels(wav_file, n_mels, n_fft, hop_length, base):
