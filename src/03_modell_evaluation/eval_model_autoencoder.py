@@ -157,11 +157,22 @@ def plot_roc_curve(y_true, y_pred):
     fpr, tpr, thres = metrics.roc_curve(y_true, y_pred)
     auc_score = roc_auc_score(y_true, y_pred)
     fig = plt.figure(figsize=(6, 6))
-    plt.plot(fpr, tpr, linestyle='--',
-             label="AUC:{:.2f}".format(auc_score))
-    plt.xlabel("False positive rate")
-    plt.ylabel("True positive rate")
-    plt.legend()
+    plt.plot(fpr, tpr, linestyle='-', linewidth=3.5,
+             label="Area under ROC:{:.2f}".format(auc_score))
+
+    # Random line
+    x_rand = np.linspace(0, 1, len(fpr))
+    y_rand = x_rand
+    plt.plot(y_rand, x_rand, linestyle='--', linewidth=2.5,
+             label='Random predictions')
+
+    plt.xlabel("False positive rate", fontsize=20)
+    plt.ylabel("True positive rate", fontsize=20)
+    plt.legend(fontsize=14, loc='lower right')
+    plt.xlim(-0.02, 1.02)
+    plt.ylim(-0.02, 1.02)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     plt.show()
     plt.close()
     return fig
@@ -284,35 +295,39 @@ def plot_losses(y_true, y_pred, y_train, title, xlabel, y_val=None, thres=None):
         plt.legend()
     else:
         fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(16, 8))
-        axs[0].set_title("Train and validation data")
-        axs[1].set_title("Test data")
-        axs[0].set_xlabel(xlabel)
-        axs[1].set_xlabel(xlabel)
+        axs[0].set_title("Train and validation data", fontsize=20)
+        axs[1].set_title("Test data", fontsize=20)
+        axs[0].set_xlabel(xlabel, fontsize=20)
+        axs[1].set_xlabel(xlabel, fontsize=20)
 
         for data, label, color in zip(left_datas, left_labels, left_cols):
             sns.distplot(data,
                          ax=axs[0],
-                         bins=20,
+                         bins=list(np.arange(0.02, 0.15, 0.0025)),
                          kde=False,
                          label=label,
                          color=color,
                          )
         axs[0].axvline(thres, ymin=0, ymax=1, ls='--', color='black')
-        axs[0].annotate('Threshold', xy=(0.048, 80), xytext=(0.048, 80), 
+        axs[0].annotate('Threshold', xy=(0.048, 80), xytext=(0.048, 80),
                         weight='bold', fontsize=15)
-        axs[0].legend()
+        axs[0].legend(fontsize=14)
+        axs[0].set_xlim(0.01, 0.15)
+        axs[0].tick_params(axis='both', which='major', labelsize=14)
 
         for data, label, color in zip(right_datas, right_labels, right_cols):
             sns.distplot(data,
                          ax=axs[1],
-                         bins=20,
+                         bins=list(np.arange(0.02, 0.15, 0.0025)),
                          kde=False,
                          label=label,
                          color=color,
                          )
         axs[1].axvline(thres, ymin=0, ymax=1, ls='--', color='black')
-        axs[1].annotate('Threshold', xy=(0.048, 25), xytext=(0.048, 25), 
+        axs[1].annotate('Threshold', xy=(0.048, 25), xytext=(0.048, 25),
                         weight='bold', fontsize=15)
-        axs[1].legend()
+        axs[1].legend(fontsize=14)
+        axs[1].set_xlim(0.01, 0.15)
+        axs[1].tick_params(axis='both', which='major', labelsize=14)
 
     return fig
