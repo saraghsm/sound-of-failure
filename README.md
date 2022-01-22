@@ -28,7 +28,7 @@ For a demonstration of the results, feel free to try yourself our [front-end pro
 
 **The Model:** In real situation, only the sound of the normal state of a machin will be available, i.e. the algorithm will not know beforehand how a malfunctioning machine would possibly sound like. Therfore, for training our models we only use the sounds from normally working machines. 
 
-We use an unsupervised Deep Learning approach with Autoencoder architecture for anomaly detection. The Autoencoder is trained to reconstruct back the input sound with a high accuracy (low reconstruction error). Since the model has only been trained on normal sounds of the machin, if after the training an abnormal sound is fed to it as an input, it is not able to reconstruct it well (high reconstruction error). By thresholding on the reconstruction error, we can diagnose a broken machine from its sound.
+We use an unsupervised Deep Learning approach with Autoencoder architecture for anomaly detection. The Autoencoder is trained to reconstruct back the input sound with a high accuracy (low reconstruction error). Since the model has only been trained on normal sounds of the machin, if an abnormal sound is fed to the trained model as an input, it is not able to reconstruct it well (high reconstruction error). By thresholding on the reconstruction error, we can diagnose a broken machine from its sound.
 
 We have used:
 * Convolution Autoencoder
@@ -38,10 +38,6 @@ We have used:
 * Transfer Learning models for feature extraction and using anomaly detection models on the extracted features -->
 Variational Autoencoder is our best model in terms of its speed and accuracy.
 
-### Project presentation 
-
-If interested, you can checkout [a presentation of the project on YouTube](https://www.youtube.com/watch?v=xaoo_Sy0dwk) for more details and a demo of the results.
-
 ### Technologies
 
 * Numpy
@@ -50,6 +46,10 @@ If interested, you can checkout [a presentation of the project on YouTube](https
 * Tensorflow, Keras
 * Scikit-learn
 * etc.
+
+## Project presentation 
+
+If interested, you can checkout [a presentation of the project on YouTube](https://www.youtube.com/watch?v=xaoo_Sy0dwk) for more details and a demo of the results.
 
 Project Organization
 ------------
