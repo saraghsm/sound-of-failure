@@ -14,24 +14,33 @@ An AI solution to reduce industrial downtime by diagnosing the failure of machin
 
 ## Project Description
 
-**The problem:** Industries experience an average downtime of ~800 hours/year. The average cost of downtime can be as high as ~$20,000 per hour! Often a major cause of downtime is malfunctioning machines. During downtime, the overhead operating costs keeps growing without a significant increase in productivity. A survey in 2017 had found that 70% of companies cannot estimate when an equipment starts malfunctioning and only realise when it’s too late. If malfunctions can be detected early, downtime costs can be drastically reduced.
+**The problem:** Industries experience an average downtime of ~800 hours/year. The average cost of downtime can be as high as ~$20,000 per hour! Often a major cause of downtime is malfunctioning machines. Surveys show that a large number of companies cannot estimate when an equipment starts malfunctioning and only realise when it’s too late. If machine malfunctions can be detected early, downtime costs can be drastically reduced.
 
-**The proposed solution:** The idea is to diagnose machine faillure using their acoustic footprint over time. A machine will produce a different acoustic signature in its abnormal state compared to its normal state. An algorithm should be able to differentiate between the two sounds.
+**The proposed solution:** The idea is to diagnose machine faillure using their acoustic footprint over time. A machine will produce a different acoustic signature in its abnormal state, compared to its normal state. An algorithm should be able to differentiate between the two sounds.
 
-**The dataset:** Until recently it was not possible to develop solutions outside-in, because there was no publicly available industry data. This has changed in September 2019 when Hitachi, Ltd. released the first of its kind dataset. It contains ca. 100GB of wav files with normal and abnormal sounds of four different types of machines (valves, pumps, fans and slide rails), mixed with their industrial environment background noise. 
+For a demonstration of the results, feel free to try yourself our [front-end prototype user interface](https://share.streamlit.io/wrijupan/sound-of-failure/main/streamlit/app.py). 
 
-### Methods Used
+**The dataset:** <!-- Until recently it was not possible to develop solutions outside-in, because there was no publicly available industry data. This has changed in September 2019 when Hitachi, Ltd. released the first of its kind dataset. It contains ca. 100GB of wav files with normal and abnormal sounds of four different types of machines (valves, pumps, fans and slide rails), mixed with their industrial environment background noise. --> A first of its kind, the [MIMII dataset](https://zenodo.org/record/3384388#.YeyHzS8w1-V) was released by Hitachi, Ltd. in September 2019. It contains ca. 100GB of wav files from normal and abnormal sounds of different types of machines, mixed with their industrial environment background noise.
 
-**Data preprocessing:** The sound problem is converted to a computer vision problem by converted the sound to its image representation (i.e. Mel spectrograms). The data processing steps include generating Mel spectrograms, standardization, chunking the spectrograms to smaller blocks for generating training and validation data batches.
+### Model Training
 
-**Machine Learning:** In general, only machine sounds from a normal state of an instrument will be available, i.e. the algorithm will not know beforehand how an abnormal sound looks like. So the training would be unsupervised using only normal sound data. Then during validation when the algorithm encounters an abnormal sound, it will identify that as an outlier.
+**Data preprocessing:** The sound problem is converted to a computer vision problem by converting the sounds to their image representations, i.e. Mel spectrograms. <!-- The data processing steps include generating Mel spectrograms, standardization, chunking the spectrograms to smaller blocks for generating training and validation data batches. -->
 
-The approaches that is used are (under active development, the results will appear very very soon here!):
+**The Model:** In real situation, only the sound of the normal state of a machin will be available, i.e. the algorithm will not know beforehand how a malfunctioning machine would possibly sound like. Therfore, for training our models we only use the sounds from normally working machines. 
+
+We use an unsupervised Deep Learning approach with Autoencoder architecture for anomaly detection. The Autoencoder is trained to reconstruct back the input sound with a high accuracy (low reconstruction error). Since the model has only been trained on normal sounds of the machin, if after the training an abnormal sound is fed to it as an input, it is not able to reconstruct it well (high reconstruction error). By thresholding on the reconstruction error, we can diagnose a broken machine from its sound.
+
+We have used:
 * Convolution Autoencoder
 * Variational Autoencoder
-* LSTM
-* Convolution LSTM
-* Transfer Learning models for feature extraction and using anomaly detection models on the extracted features
+* LSTM Autoencoder
+<!-- * Convolution LSTM
+* Transfer Learning models for feature extraction and using anomaly detection models on the extracted features -->
+Variational Autoencoder is our best model in terms of its speed and accuracy.
+
+### Project presentation 
+
+If interested, you can checkout [a presentation of the project on YouTube](https://www.youtube.com/watch?v=xaoo_Sy0dwk) for more details and a demo of the results.
 
 ### Technologies
 
@@ -41,15 +50,6 @@ The approaches that is used are (under active development, the results will appe
 * Tensorflow, Keras
 * Scikit-learn
 * etc.
-
-## Getting Started
-
-0. Get the raw data from... (TBC)
-
-1. Clone this repo (for help see this [tutorial](https://help.github.com/articles/cloning-a-repository/)).
-2. cd sound-of-failure; mkdir data
-3. ...
-4. ...
 
 Project Organization
 ------------
